@@ -1226,6 +1226,8 @@ class _DashboardScreenState
   bool _hasPregnancyProfile =false;
   bool _isPregnancyProfileLoading= true;
 
+  int? _pregnancyWeek;
+
 
   @override
   void initState() {
@@ -1366,23 +1368,40 @@ Future<void> _loadPregnancyProfile() async {
     if (!mounted) return;
 
     if (response.statusCode == 200) {
-      setState(() {
-        _hasPregnancyProfile = true;
-        _isPregnancyProfileLoading = false;
-      });
+  final data = jsonDecode(response.body);
 
-      return;
-    }
+  if (!mounted) return;
+
+  if (data is Map) {
+    setState(() {
+      _hasPregnancyProfile = true;
+
+      _pregnancyWeek =
+          data['current_week'] is int
+              ? data['current_week'] as int
+              : int.tryParse(
+                  data['current_week']?.toString() ?? '',
+                );
+
+      _isPregnancyProfileLoading = false;
+    });
+  } else {
+    setState(() {
+      _hasPregnancyProfile = false;
+      _isPregnancyProfileLoading = false;
+    });
+  }
+  return;
+}
 
     if (response.statusCode == 404) {
-      // User has not created a pregnancy profile.
-      setState(() {
-        _hasPregnancyProfile = false;
-        _isPregnancyProfileLoading = false;
-      });
-
-      return;
-    }
+  setState(() {
+    _pregnancyWeek = null;
+    _hasPregnancyProfile = false;
+    _isPregnancyProfileLoading = false;
+  });
+  return;
+}
 
     if (response.statusCode == 401) {
       await clearAuth();
@@ -1524,6 +1543,89 @@ Future<void> _loadPregnancyProfile() async {
             const SizedBox(
               height: 24,
             ),
+            // ------------------------------------------------
+// WEEKLY PREGNANCY CARD
+// ------------------------------------------------
+
+if (!_isPregnancyProfileLoading &&
+    _hasPregnancyProfile &&
+    _pregnancyWeek != null)
+  Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+    ),
+    child: Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const CircleAvatar(
+              backgroundColor:
+                  Color(0xFFE9E7FF),
+              child: Icon(
+                Icons.pregnant_woman,
+                color: Color(0xFF6C63FF),
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            const Expanded(
+              child: Text(
+                'Your Pregnancy Journey',
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 18),
+
+        Text(
+          'Week $_pregnancyWeek',
+          style: const TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+        const SizedBox(height: 4),
+
+        Text(
+          'You are in week $_pregnancyWeek of your pregnancy.',
+          style: const TextStyle(
+            color: Colors.grey,
+            fontSize: 15,
+          ),
+        ),
+
+        const SizedBox(height: 18),
+
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: _openPregnancyProfile,
+            child: const Text(
+              'View Pregnancy Information',
+            ),
+          ),
+        ),
+      ],
+    ),
+  ),
+
+if (!_isPregnancyProfileLoading &&
+    _hasPregnancyProfile &&
+    _pregnancyWeek != null)
+  const SizedBox(
+    height: 24,
+  ),
 
             // ------------------------------------------------
             // AI CARD
