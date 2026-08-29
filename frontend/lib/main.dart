@@ -4624,6 +4624,65 @@ class _ProfileScreenState
           '';
     });
   }
+  Future<void> _openPregnancyProfile() async {
+  try {
+    final response = await http.get(
+      Uri.parse(
+        '$apiBaseUrl/pregnancy/profile',
+      ),
+      headers: await authHeaders(),
+    );
+
+    if (!mounted) return;
+
+    Map<String, dynamic>? existingProfile;
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      if (data is Map) {
+        existingProfile =
+            Map<String, dynamic>.from(data);
+      }
+    } else if (response.statusCode != 404) {
+      _showProfileMessage(
+        'Unable to load pregnancy information.',
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PregnancyProfileScreen(
+          existingProfile: existingProfile,
+          onSaved: () {},
+        ),
+      ),
+    );
+  } catch (e) {
+    debugPrint(
+      'Pregnancy profile error: $e',
+    );
+
+    if (!mounted) return;
+
+    _showProfileMessage(
+      'Could not connect to the server.',
+    );
+  }
+}
+void _showProfileMessage(String message) {
+  if (!mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+    ),
+  );
+}
 
 
   Future<void> _logout() async {
@@ -4812,48 +4871,68 @@ Navigator.of(context).pushAndRemoveUntil(
             ),
           ),
 
-          const SizedBox(
-            height: 20,
-          ),
+const SizedBox(
+  height: 20,
+),
 
-          Container(
+// ==========================================================
+// PREGNANCY INFORMATION
+// ==========================================================
 
-            decoration:
-                BoxDecoration(
-              color:
-                  Colors.white,
-              borderRadius:
-                  BorderRadius.circular(
-                18,
-              ),
-            ),
+Container(
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(18),
+  ),
+  child: ListTile(
+    leading: const Icon(
+      Icons.pregnant_woman,
+      color: Color(0xFF6C63FF),
+    ),
+    title: const Text(
+      'Pregnancy Information',
+      style: TextStyle(
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+    subtitle: const Text(
+      'Manage pregnancy, diet and allergy information',
+    ),
+    trailing: const Icon(
+      Icons.chevron_right,
+    ),
+    onTap: _openPregnancyProfile,
+  ),
+),
 
-            child:
-                ListTile(
+const SizedBox(
+  height: 12,
+),
 
-              leading:
-                  const Icon(
-                Icons.logout,
-                color:
-                    Colors.red,
-              ),
+// ==========================================================
+// LOGOUT
+// ==========================================================
 
-              title:
-                  const Text(
-                'Logout',
-                style:
-                    TextStyle(
-                  color:
-                      Colors.red,
-                  fontWeight:
-                      FontWeight.bold,
-                ),
-              ),
-
-              onTap:
-                  _logout,
-            ),
-          ),
+Container(
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(18),
+  ),
+  child: ListTile(
+    leading: const Icon(
+      Icons.logout,
+      color: Colors.red,
+    ),
+    title: const Text(
+      'Logout',
+      style: TextStyle(
+        color: Colors.red,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    onTap: _logout,
+  ),
+),
         ],
       ),
     );
