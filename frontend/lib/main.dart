@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'pregnancy_week_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1476,17 +1476,24 @@ Future<void> _loadPregnancyProfile() async {
     });
   }
   void _openPregnancyProfile() {
+  if (_pregnancyWeek == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Pregnancy week information is not available yet.',
+        ),
+      ),
+    );
+    return;
+  }
+
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) => PregnancyProfileScreen(
-        onSaved: () {
-          if (!mounted) return;
-
-          setState(() {
-            _hasPregnancyProfile = true;
-          });
-        },
+      builder: (_) => PregnancyWeekScreen(
+        week: _pregnancyWeek!,
+        apiBaseUrl: apiBaseUrl,
+        authHeaders: authHeaders,
       ),
     ),
   );

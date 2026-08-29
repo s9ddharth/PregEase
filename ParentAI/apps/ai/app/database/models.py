@@ -197,6 +197,10 @@ class PregnancyContentSource(Base):
         nullable=False,
     )
 
+    section: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+    )
     organization: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
