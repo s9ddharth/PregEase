@@ -1396,6 +1396,7 @@ Future<void> _loadPregnancyProfile() async {
 
     if (response.statusCode == 404) {
   setState(() {
+
     _pregnancyWeek = null;
     _hasPregnancyProfile = false;
     _isPregnancyProfileLoading = false;

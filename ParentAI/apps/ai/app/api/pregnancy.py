@@ -122,3 +122,32 @@ def update_pregnancy_profile(
         )
 
     return profile
+# ============================================================
+# GET WEEKLY PREGNANCY CONTENT
+# ============================================================
+
+@router.get(
+    "/week/{week}",
+)
+def get_weekly_pregnancy_content(
+    week: int,
+    user_id: int = Depends(
+        get_current_user_id
+    ),
+):
+    content = (
+        pregnancy_service.get_week_content(
+            week
+        )
+    )
+
+    if content is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=(
+                "Published pregnancy content "
+                "for this week is not available."
+            ),
+        )
+
+    return content

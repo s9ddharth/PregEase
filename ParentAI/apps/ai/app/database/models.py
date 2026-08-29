@@ -1,13 +1,18 @@
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
-from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy import DateTime, ForeignKey, String, Text, Integer
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     mapped_column,
     relationship,
 )
+IST = ZoneInfo("Asia/Kolkata")
 
+
+def ist_now() -> datetime:
+    return datetime.now(IST).replace(tzinfo=None)
 
 class Base(DeclarativeBase):
     pass
@@ -40,7 +45,7 @@ class User(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
+        default=ist_now,
     )
 
     sessions: Mapped[list["ChatSession"]] = relationship(
@@ -89,19 +94,143 @@ class PregnancyProfile(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
+        default=ist_now,
     )
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=ist_now,
+        onupdate=ist_now    ,
     )
 
     user: Mapped["User"] = relationship(
         back_populates="pregnancy_profile",
     )
+class PregnancyWeekContent(Base):
+    __tablename__ = "pregnancy_week_content"
 
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    week: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        unique=True,
+    )
+
+    baby_growth: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    body_changes: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    activities: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    nutrition_guidance: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    precautions: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    mental_wellness: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    content_version: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=1,
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="draft",
+    )
+
+    reviewed_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=ist_now,
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=ist_now,
+        onupdate=ist_now ,
+    )
+
+    sources: Mapped[list["PregnancyContentSource"]] = relationship(
+        back_populates="content",
+        cascade="all, delete-orphan",
+    )
+
+
+class PregnancyContentSource(Base):
+    __tablename__ = "pregnancy_content_sources"
+
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    content_id: Mapped[int] = mapped_column(
+        ForeignKey("pregnancy_week_content.id"),
+        nullable=False,
+    )
+
+    organization: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+
+    title: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False,
+    )
+
+    url: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    source_type: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        default="guideline",
+    )
+
+    reviewed_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=ist_now,
+    )
+
+    content: Mapped["PregnancyWeekContent"] = relationship(
+        back_populates="sources",
+    )
 class ChatSession(Base):
     __tablename__ = "chat_sessions"
 
@@ -122,7 +251,7 @@ class ChatSession(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
+        default=ist_now,
     )
 
     user: Mapped[User] = relationship(
@@ -160,7 +289,7 @@ class ChatMessage(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=datetime.utcnow,
+        default=ist_now,
     )
 
     session: Mapped[ChatSession] = relationship(

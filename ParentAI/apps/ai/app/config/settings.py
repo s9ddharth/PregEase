@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     mysql_port: int = 3306
     mysql_user: str = "root"
     mysql_password: str = ""
-    mysql_database: str = "nurture_ai"
+    mysql_database: str = "pregease"
 
     # JWT authentication
     jwt_secret_key: str = ""

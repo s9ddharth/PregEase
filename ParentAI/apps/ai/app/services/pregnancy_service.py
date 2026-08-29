@@ -1,7 +1,7 @@
 import json
 from datetime import date, datetime
 
-from app.database.models import PregnancyProfile
+from app.database.models import (PregnancyProfile,PregnancyWeekContent)
 from app.database.session import SessionLocal
 
 
@@ -226,6 +226,62 @@ class PregnancyService:
 
         finally:
             db.close()
+    # ========================================================
+    # GET WEEKLY PREGNANCY CONTENT
+    # ========================================================
 
+    def get_week_content(self, week: int):
+        if week < 1 or week > 40:
+            return None
+
+        db = SessionLocal()
+
+        try:
+            content = (
+                db.query(PregnancyWeekContent)
+                .filter(
+                    PregnancyWeekContent.week == week,
+                    PregnancyWeekContent.status == "published",
+                )
+                .first()
+            )
+
+            if content is None:
+                return None
+
+            return {
+                "id": content.id,
+                "week": content.week,
+                "baby_growth": content.baby_growth,
+                "body_changes": content.body_changes,
+                "activities": content.activities,
+                "nutrition_guidance": content.nutrition_guidance,
+                "precautions": content.precautions,
+                "mental_wellness": content.mental_wellness,
+                "content_version": content.content_version,
+                "status": content.status,
+                "reviewed_at": (
+                    content.reviewed_at.isoformat()
+                    if content.reviewed_at
+                    else None
+                ),
+                "sources": [
+                    {
+                        "organization": source.organization,
+                        "title": source.title,
+                        "url": source.url,
+                        "source_type": source.source_type,
+                        "reviewed_at": (
+                            source.reviewed_at.isoformat()
+                            if source.reviewed_at
+                            else None
+                        ),
+                    }
+                    for source in content.sources
+                ],
+            }
+
+        finally:
+            db.close()
 
 pregnancy_service = PregnancyService()
