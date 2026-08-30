@@ -84,11 +84,91 @@ class PregEaseApp extends StatelessWidget {
             const Color(0xFFF7F8FA),
 
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF6C63FF),
+          seedColor: const Color(0xFF2196F3),
         ),
       ),
 
       home: const AuthGate(),
+    );
+  }
+}
+
+class _InfoCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final Color iconColor;
+  final VoidCallback onTap;
+
+  const _InfoCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.iconColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 145,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: const Color(0xFFEAF1F8),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  icon,
+                  color: iconColor,
+                  size: 24,
+                ),
+              ),
+
+              const Spacer(),
+
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+
+              const SizedBox(height: 4),
+
+              Text(
+                subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  height: 1.3,
+                  color: Colors.black54,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -427,7 +507,7 @@ Future<void> _login() async {
                     Icons.child_care,
                     size: 75,
                     color:
-                        Color(0xFF6C63FF),
+                        Color(0xFF2196F3),
                   ),
 
                   const SizedBox(
@@ -1525,33 +1605,42 @@ Future<void> _loadPregnancyProfile() async {
               height: 10,
             ),
 
-            const Text(
-              'Good to see you 👋',
+            Padding(
+  padding: const EdgeInsets.only(
+    left: 4,
+    right: 4,
+    bottom: 4,
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'Good to see you 👋',
+        style: TextStyle(
+          fontSize: 30,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.5,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        'How can PregEase help you today?',
+        style: TextStyle(
+          color: Colors.grey.shade600,
+          fontSize: 15.5,
+          height: 1.4,
+        ),
+      ),
+    ],
+  ),
+),
 
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight:
-                    FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(
-              height: 6,
-            ),
-
-            const Text(
-              'How can PregEase help you today?',
-
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 15,
-              ),
-            ),
+const SizedBox(height: 26),
 
             const SizedBox(
               height: 24,
             ),
-            // ------------------------------------------------
+ // ------------------------------------------------
 // WEEKLY PREGNANCY CARD
 // ------------------------------------------------
 
@@ -1559,68 +1648,168 @@ if (!_isPregnancyProfileLoading &&
     _hasPregnancyProfile &&
     _pregnancyWeek != null)
   Container(
-    padding: const EdgeInsets.all(20),
+    padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(22),
+      color: const Color(0xFFF3F0FF),
+      borderRadius: BorderRadius.circular(28),
+      border: Border.all(
+        color: const Color(0xFFE4DEFF),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 18,
+          offset: const Offset(0, 8),
+        ),
+      ],
     ),
     child: Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const CircleAvatar(
-              backgroundColor:
-                  Color(0xFFE9E7FF),
-              child: Icon(
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const Icon(
                 Icons.pregnant_woman,
-                color: Color(0xFF6C63FF),
+                color: Color(0xFF2196F3),
+                size: 28,
               ),
             ),
 
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
 
             const Expanded(
-              child: Text(
-                'Your Pregnancy Journey',
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'YOUR PREGNANCY JOURNEY',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.1,
+                      color: Color(0xFF2196F3),
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    'Growing together, one week at a time',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
 
-        const SizedBox(height: 18),
+        const SizedBox(height: 28),
 
         Text(
           'Week $_pregnancyWeek',
           style: const TextStyle(
-            fontSize: 30,
-            fontWeight: FontWeight.bold,
+            fontSize: 36,
+            fontWeight: FontWeight.w800,
+            height: 1,
           ),
         ),
 
-        const SizedBox(height: 4),
+        const SizedBox(height: 10),
 
         Text(
           'You are in week $_pregnancyWeek of your pregnancy.',
           style: const TextStyle(
-            color: Colors.grey,
             fontSize: 15,
+            height: 1.5,
+            color: Colors.black54,
           ),
         ),
 
-        const SizedBox(height: 18),
+        const SizedBox(height: 22),
+
+        Container(
+          height: 8,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: (_pregnancyWeek! / 40)
+                .clamp(0.0, 1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF2196F3),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Week $_pregnancyWeek',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.black45,
+              ),
+            ),
+            const Text(
+              'Week 40',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.black45,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 22),
 
         SizedBox(
           width: double.infinity,
-          child: OutlinedButton(
+          child: ElevatedButton(
             onPressed: _openPregnancyProfile,
-            child: const Text(
-              'View Pregnancy Information',
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2196F3),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(
+                vertical: 16,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'View Pregnancy Information',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 20,
+                ),
+              ],
             ),
           ),
         ),
@@ -1635,113 +1824,137 @@ if (!_isPregnancyProfileLoading &&
     height: 24,
   ),
 
-            // ------------------------------------------------
-            // AI CARD
-            // ------------------------------------------------
+// ------------------------------------------------
+// AI CARD
+// ------------------------------------------------
 
-            Container(
-
-              padding:
-                  const EdgeInsets.all(
-                20,
-              ),
-
-              decoration:
-                  BoxDecoration(
-
-                color:
-                    const Color(
-                  0xFF6C63FF,
-                ),
-
-                borderRadius:
-                    BorderRadius.circular(
-                  22,
-                ),
-              ),
-
-              child:
-                  Column(
-
-                crossAxisAlignment:
-                    CrossAxisAlignment
-                        .start,
-
-                children: [
-
-                  const CircleAvatar(
-                    radius: 27,
-
-                    backgroundColor:
-                        Colors.white,
-
-                    child: Icon(
-                      Icons.smart_toy,
-                      color:
-                          Color(
-                        0xFF6C63FF,
-                      ),
-                      size: 28,
-                    ),
-                  ),
-
-                  const SizedBox(
-                    height: 16,
-                  ),
-
-                  const Text(
-                    'Talk to PregEase',
-
-                    style: TextStyle(
-                      color:
-                          Colors.white,
-                      fontSize: 22,
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(
-                    height: 7,
-                  ),
-
-                  const Text(
-                    'Your personal AI parenting companion is here to help.',
-
-                    style: TextStyle(
-                      color:
-                          Colors.white70,
-                      fontSize: 15,
-                    ),
-                  ),
-
-                  const SizedBox(
-                    height: 18,
-                  ),
-
-                  ElevatedButton(
-                    onPressed:
-                        () =>
-                            _openNewChat(),
-
-                    style:
-                        ElevatedButton
-                            .styleFrom(
-                      backgroundColor:
-                          Colors.white,
-                      foregroundColor:
-                          const Color(
-                        0xFF6C63FF,
-                      ),
-                    ),
-
-                    child: const Text(
-                      'Start a conversation',
-                    ),
-                  ),
-                ],
-              ),
+Container(
+  padding: const EdgeInsets.all(24),
+  decoration: BoxDecoration(
+    color: const Color(0xFF2196F3),
+    borderRadius: BorderRadius.circular(28),
+    boxShadow: [
+      BoxShadow(
+        color: const Color(0xFF2196F3).withOpacity(0.18),
+        blurRadius: 18,
+        offset: const Offset(0, 8),
+      ),
+    ],
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
             ),
+            child: const Icon(
+              Icons.smart_toy_outlined,
+              color: Color(0xFF2196F3),
+              size: 28,
+            ),
+          ),
+
+          const Spacer(),
+
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  Icons.auto_awesome,
+                  color: Colors.white,
+                  size: 14,
+                ),
+                SizedBox(width: 5),
+                Text(
+                  'PregEase AI',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+
+      const SizedBox(height: 22),
+
+      const Text(
+        'Talk to PregEase',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 24,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.3,
+        ),
+      ),
+
+      const SizedBox(height: 8),
+
+      const Text(
+        'Your personal AI parenting companion is here to help.',
+        style: TextStyle(
+          color: Colors.white70,
+          fontSize: 15,
+          height: 1.5,
+        ),
+      ),
+
+      const SizedBox(height: 22),
+
+      SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: _openNewChat,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: const Color(0xFF2196F3),
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(
+              vertical: 16,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Start a conversation',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(width: 8),
+              Icon(
+                Icons.arrow_forward_rounded,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    ],
+  ),
+),
 
             const SizedBox(
   height: 24,
@@ -1766,10 +1979,10 @@ if (!_isPregnancyProfileLoading &&
         const Row(
           children: [
             CircleAvatar(
-              backgroundColor: Color(0xFFE9E7FF),
+              backgroundColor: Color(0xFFE6F4FF),
               child: Icon(
                 Icons.pregnant_woman,
-                color: Color(0xFF6C63FF),
+                color: Color(0xFF2196F3),
               ),
             ),
 
@@ -1833,238 +2046,323 @@ if (!_isPregnancyProfileLoading &&
     height: 28,
   ),
 
+// ------------------------------------------------
+// YOU MAY ALSO WANT TO KNOW
+// ------------------------------------------------
+
 const Text(
-  'Quick questions',
+  'You may also want to know',
   style: TextStyle(
     fontSize: 21,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.w800,
   ),
 ),
 
-const SizedBox(
-  height: 14,
-),
+const SizedBox(height: 14),
 
-_QuickPrompt(
-  icon: Icons.nightlight,
-  title: 'Sleep',
-  prompt: 'How can I improve my child\'s sleep?',
-  onTap: () {
-    _openNewChat(
-      prompt: 'How can I improve my child\'s sleep?',
-    );
-  },
-),
+SizedBox(
+  height: 150,
+  child: ListView(
+    scrollDirection: Axis.horizontal,
+    children: [
+      _InfoCard(
+        icon: Icons.restaurant_outlined,
+        title: 'Nutrition',
+        subtitle: 'Healthy eating during pregnancy',
+        color: const Color(0xFFFFF1DD),
+        iconColor: const Color(0xFFF39C12),
+        onTap: () {
+          _openNewChat(
+            prompt: 'What should I know about nutrition during pregnancy?',
+          );
+        },
+      ),
 
-_QuickPrompt(
-  icon: Icons.restaurant,
-  title: 'Nutrition',
-  prompt: 'What should I feed my child?',
-  onTap: () {
-    _openNewChat(
-      prompt: 'What should I feed my child?',
-    );
-  },
-),
+      const SizedBox(width: 12),
 
-_QuickPrompt(
-  icon: Icons.child_care,
-  title: 'Development',
-  prompt: 'Is my child developing normally?',
-  onTap: () {
-    _openNewChat(
-      prompt: 'Is my child developing normally?',
-    );
-  },
-),
+      _InfoCard(
+        icon: Icons.self_improvement_outlined,
+        title: 'Wellness',
+        subtitle: 'Take care of your body & mind',
+        color: const Color(0xFFE6F4FF),
+        iconColor: const Color(0xFF2196F3),
+        onTap: () {
+          _openNewChat(
+            prompt: 'What are some safe wellness activities during pregnancy?',
+          );
+        },
+      ),
 
-const SizedBox(
-  height: 24,
-),
+      const SizedBox(width: 12),
 
-const Text(
-  'Recent conversations',
-  style: TextStyle(
-    fontSize: 21,
-    fontWeight: FontWeight.bold,
+      _InfoCard(
+        icon: Icons.directions_walk_outlined,
+        title: 'Activities',
+        subtitle: 'Safe ways to stay active',
+        color: const Color(0xFFE8F7EF),
+        iconColor: const Color(0xFF35A66F),
+        onTap: () {
+          _openNewChat(
+            prompt: 'What activities are safe during pregnancy?',
+          );
+        },
+      ),
+
+      const SizedBox(width: 12),
+
+      _InfoCard(
+        icon: Icons.child_friendly_outlined,
+        title: 'Prepare',
+        subtitle: 'Get ready for your baby',
+        color: const Color(0xFFF3E9FF),
+        iconColor: const Color(0xFF8E63D2),
+        onTap: () {
+          _openNewChat(
+            prompt: 'How can I prepare for my baby?',
+          );
+        },
+      ),
+    ],
   ),
 ),
 
-const SizedBox(
-  height: 14,
+const SizedBox(height: 28),
+
+// ------------------------------------------------
+// CONTINUE YOUR CONVERSATIONS
+// ------------------------------------------------
+
+Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    const Text(
+      'Continue your conversations',
+      style: TextStyle(
+        fontSize: 21,
+        fontWeight: FontWeight.w800,
+      ),
+    ),
+
+    if (_recentSessions.isNotEmpty)
+      TextButton(
+        onPressed: () {
+          // We can connect this to a full conversations screen later.
+        },
+        child: const Text(
+          'See all',
+          style: TextStyle(
+            color: Color(0xFF2196F3),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+  ],
 ),
 
-            if (_isLoading)
+const SizedBox(height: 8),
 
-              const Center(
-                child:
-                    CircularProgressIndicator(),
-              )
+if (_isLoading)
+  const Center(
+    child: Padding(
+      padding: EdgeInsets.all(20),
+      child: CircularProgressIndicator(),
+    ),
+  )
+else if (_error != null)
+  Container(
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Column(
+      children: [
+        const Icon(
+          Icons.cloud_off_outlined,
+          size: 40,
+          color: Color(0xFF2196F3),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          _error!,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        TextButton.icon(
+          onPressed: _loadRecentSessions,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Retry'),
+        ),
+      ],
+    ),
+  )
+else if (_recentSessions.isEmpty)
+  Container(
+    padding: const EdgeInsets.all(22),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: const Column(
+      children: [
+        Icon(
+          Icons.chat_bubble_outline_rounded,
+          size: 42,
+          color: Color(0xFF2196F3),
+        ),
+        SizedBox(height: 10),
+        Text(
+          'No conversations yet',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          'Start a conversation with PregEase.',
+          style: TextStyle(
+            color: Colors.black54,
+          ),
+        ),
+      ],
+    ),
+  )
+else
+  ..._recentSessions.take(3).map(
+    (session) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: const Color(0xFFEAF1F8),
+          ),
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
+          ),
+          leading: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE6F4FF),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.chat_bubble_outline_rounded,
+              color: Color(0xFF2196F3),
+            ),
+          ),
+          title: Text(
+            session.displayTitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          subtitle: const Text(
+            'Continue your conversation',
+            style: TextStyle(
+              color: Colors.black54,
+              fontSize: 12,
+            ),
+          ),
+          trailing: const Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 15,
+            color: Colors.black45,
+          ),
+          onTap: () => _openSession(session),
+        ),
+      );
+    },
+  ),
 
-            else if (_error != null)
+const SizedBox(height: 18),
 
-              Container(
+// ------------------------------------------------
+// FUN FACTS
+// ------------------------------------------------
 
-                padding:
-                    const EdgeInsets.all(
-                  16,
-                ),
+Container(
+  padding: const EdgeInsets.all(22),
+  decoration: BoxDecoration(
+    color: const Color(0xFFEAF6FF),
+    borderRadius: BorderRadius.circular(24),
+    border: Border.all(
+      color: const Color(0xFFD6ECFF),
+    ),
+  ),
+  child: Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(
+          Icons.lightbulb_outline_rounded,
+          color: Color(0xFF2196F3),
+          size: 27,
+        ),
+      ),
 
-                decoration:
-                    BoxDecoration(
-                  color: Colors.white,
-                  borderRadius:
-                      BorderRadius.circular(
-                    18,
+      const SizedBox(width: 14),
+
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Fun fact',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-
-                child:
-                    Column(
-
-                  children: [
-
-                    Text(
-                      _error!,
-                      textAlign:
-                          TextAlign.center,
-                    ),
-
-                    const SizedBox(
-                      height: 10,
-                    ),
-
-                    TextButton.icon(
-                      onPressed:
-                          _loadRecentSessions,
-                      icon:
-                          const Icon(
-                        Icons.refresh,
-                      ),
-                      label:
-                          const Text(
-                        'Retry',
-                      ),
-                    ),
-                  ],
+                Icon(
+                  Icons.auto_awesome,
+                  size: 18,
+                  color: Color(0xFF2196F3),
                 ),
-              )
+              ],
+            ),
 
-            else if (
-                _recentSessions.isEmpty)
+            const SizedBox(height: 8),
 
-              Container(
-
-                padding:
-                    const EdgeInsets.all(
-                  20,
-                ),
-
-                decoration:
-                    BoxDecoration(
-                  color: Colors.white,
-                  borderRadius:
-                      BorderRadius.circular(
-                    18,
-                  ),
-                ),
-
-                child:
-                    const Column(
-
-                  children: [
-
-                    Icon(
-                      Icons
-                          .chat_bubble_outline,
-                      size: 45,
-                      color:
-                          Color(
-                        0xFF6C63FF,
-                      ),
-                    ),
-
-                    SizedBox(
-                      height: 10,
-                    ),
-
-                    Text(
-                      'No conversations yet',
-                      style:
-                          TextStyle(
-                        fontWeight:
-                            FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-
-            else
-
-              ..._recentSessions.map(
-                (session) {
-
-                  return Container(
-
-                    margin:
-                        const EdgeInsets.only(
-                      bottom: 10,
-                    ),
-
-                    decoration:
-                        BoxDecoration(
-                      color:
-                          Colors.white,
-                      borderRadius:
-                          BorderRadius.circular(
-                        18,
-                      ),
-                    ),
-
-                    child:
-                        ListTile(
-
-                      leading:
-                          const CircleAvatar(
-                        backgroundColor:
-                            Color(
-                          0xFFE9E7FF,
-                        ),
-                        child: Icon(
-                          Icons.chat,
-                          color:
-                              Color(
-                            0xFF6C63FF,
-                          ),
-                        ),
-                      ),
-
-                      title:
-                          Text(
-                        session.displayTitle,
-                        style:
-                            const TextStyle(
-                          fontWeight:
-                              FontWeight.bold,
-                        ),
-                      ),
-
-                      trailing:
-                          const Icon(
-                        Icons
-                            .arrow_forward_ios,
-                        size: 15,
-                      ),
-
-                      onTap: () =>
-                          _openSession(
-                        session,
-                      ),
-                    ),
-                  );
-                },
+            Text(
+              _pregnancyWeek != null &&
+                      _pregnancyWeek! <= 8
+                  ? 'Your baby is growing incredibly quickly during these early weeks! 💙'
+                  : _pregnancyWeek != null &&
+                          _pregnancyWeek! <= 20
+                      ? 'Your baby is developing new abilities every week. What an amazing journey! ✨'
+                      : 'Your baby is continuing to grow and prepare for the journey ahead. 🩵',
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: Colors.black87,
               ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  ),
+),
+
+const SizedBox(height: 20),
           ],
         ),
       ),
@@ -2756,14 +3054,14 @@ class _QuickPrompt
             CircleAvatar(
           backgroundColor:
               const Color(
-            0xFFE9E7FF,
+            0xFFE6F4FF,
           ),
 
           child: Icon(
             icon,
             color:
                 const Color(
-              0xFF6C63FF,
+              0xFF2196F3,
             ),
           ),
         ),
@@ -3216,7 +3514,7 @@ class _ChatHistoryScreenState
 
         backgroundColor:
             const Color(
-          0xFF6C63FF,
+          0xFF2196F3,
         ),
 
         foregroundColor:
@@ -3339,7 +3637,7 @@ class _ChatHistoryScreenState
                 size: 65,
                 color:
                     Color(
-                  0xFF6C63FF,
+                  0xFF2196F3,
                 ),
               ),
 
@@ -3475,7 +3773,7 @@ class _ChatHistoryScreenState
 
                     backgroundColor:
                         Color(
-                      0xFFE9E7FF,
+                      0xFFE6F4FF,
                     ),
 
                     child:
@@ -3484,7 +3782,7 @@ class _ChatHistoryScreenState
                           .chat_bubble_outline,
                       color:
                           Color(
-                        0xFF6C63FF,
+                        0xFF2196F3,
                       ),
                     ),
                   ),
@@ -3920,7 +4218,7 @@ class _ChatScreenState
           color:
               isUser
                   ? const Color(
-                      0xFF6C63FF,
+                      0xFF2196F3,
                     )
                   : Colors.white,
 
@@ -4031,7 +4329,7 @@ class _ChatScreenState
                                         55,
                                     color:
                                         Color(
-                                      0xFF6C63FF,
+                                      0xFF2196F3,
                                     ),
                                   ),
 
@@ -4213,7 +4511,7 @@ class _ChatScreenState
 
                     backgroundColor:
                         const Color(
-                      0xFF6C63FF,
+                      0xFF2196F3,
                     ),
 
                     child:
@@ -4395,7 +4693,7 @@ class _CommunityCard
 
             backgroundColor:
                 const Color(
-              0xFFE9E7FF,
+              0xFFE6F4FF,
             ),
 
             child:
@@ -4403,7 +4701,7 @@ class _CommunityCard
               icon,
               color:
                   const Color(
-                0xFF6C63FF,
+                0xFF2196F3,
               ),
             ),
           ),
@@ -4606,7 +4904,7 @@ class _DoctorCard
 
             backgroundColor:
                 const Color(
-              0xFFE9E7FF,
+              0xFFE6F4FF,
             ),
 
             child:
@@ -4614,7 +4912,7 @@ class _DoctorCard
               icon,
               color:
                   const Color(
-                0xFF6C63FF,
+                0xFF2196F3,
               ),
             ),
           ),
@@ -4930,7 +5228,7 @@ Navigator.of(context).pushAndRemoveUntil(
 
                   backgroundColor:
                       Color(
-                    0xFFE9E7FF,
+                    0xFFE6F4FF,
                   ),
 
                   child:
@@ -4940,7 +5238,7 @@ Navigator.of(context).pushAndRemoveUntil(
                         45,
                     color:
                         Color(
-                      0xFF6C63FF,
+                      0xFF2196F3,
                     ),
                   ),
                 ),
@@ -4997,7 +5295,7 @@ Container(
   child: ListTile(
     leading: const Icon(
       Icons.pregnant_woman,
-      color: Color(0xFF6C63FF),
+      color: Color(0xFF2196F3),
     ),
     title: const Text(
       'Pregnancy Information',
