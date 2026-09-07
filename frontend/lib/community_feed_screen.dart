@@ -239,9 +239,7 @@ class _CommunityFeedScreenState
         builder: (dialogContext) {
           return AlertDialog(
             title: const Text('Connection Error'),
-            content: Text(
-              e.toString(),
-            ),
+            content: Text(e.toString()),
             actions: [
               TextButton(
                 onPressed: () {
@@ -365,6 +363,216 @@ class _CommunityFeedScreenState
   }
 
   // ==========================================================
+  // REPORT POST
+  // ==========================================================
+
+  Future<void> _reportPost(int postId) async {
+    debugPrint(
+  'REPORT POST: communityId=${widget.communityId}, postId=$postId',
+);
+    final reasons = <String, String>{
+      'harassment': 'Harassment',
+      'hate': 'Hate / discrimination',
+      'spam': 'Spam / scam',
+      'sexual': 'Sexual content',
+      'dangerous_medical':
+          'Dangerous / medical misinformation',
+      'privacy': 'Privacy / doxxing',
+      'violence': 'Violence / threats',
+      'other': 'Other',
+    };
+
+
+    String? selectedReason;
+    final detailsController = TextEditingController();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (
+            context,
+            setDialogState,
+          ) {
+            return AlertDialog(
+              title: const Text('Report Post'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Why are you reporting this post?',
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    DropdownButtonFormField<String>(
+                      value: selectedReason,
+                      decoration: const InputDecoration(
+                        labelText: 'Reason',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: reasons.entries
+                          .map(
+                            (entry) =>
+                                DropdownMenuItem<String>(
+                              value: entry.key,
+                              child: Text(entry.value),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setDialogState(() {
+                          selectedReason = value;
+                        });
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    TextField(
+                      controller: detailsController,
+                      maxLines: 4,
+                      maxLength: 1000,
+                      decoration: const InputDecoration(
+                        labelText: 'Additional details (optional)',
+                        hintText:
+                            'Tell us more about the issue.',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(
+                      dialogContext,
+                      false,
+                    );
+                  },
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: selectedReason == null
+                      ? null
+                      : () {
+                          Navigator.pop(
+                            dialogContext,
+                            true,
+                          );
+                        },
+                  child: const Text('Report'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (!mounted || result != true) {
+      detailsController.dispose();
+      return;
+    }
+
+    final reason = selectedReason!;
+    final details = detailsController.text.trim();
+
+    detailsController.dispose();
+
+    try {
+      final headers = {
+        ...await authHeaders(),
+        'Content-Type': 'application/json',
+      };
+
+      final response = await http.post(
+        Uri.parse(
+          '$apiBaseUrl/community/'
+          '${widget.communityId}/posts/$postId/report',
+        ),
+        headers: headers,
+        body: jsonEncode({
+          'reason': reason,
+          'details': details.isEmpty ? null : details,
+        }),
+      );
+      debugPrint(
+  'REPORT RESPONSE: status=${response.statusCode}, body=${response.body}',
+);
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Report submitted successfully.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      if (response.statusCode == 403) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'You cannot report your own post.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      if (response.statusCode == 409) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'You have already reported this post.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      if (response.statusCode == 404) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Post not found.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to report post '
+            '(${response.statusCode}).',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not connect to the server.',
+          ),
+        ),
+      );
+    }
+  }
+
+  // ==========================================================
   // DATE FORMAT
   // ==========================================================
 
@@ -443,7 +651,6 @@ class _CommunityFeedScreenState
             else
               ..._posts.map(
                 (post) => _PostCard(
-                  communityId: widget.communityId,
                   postId: post['id'] as int,
                   isOwner: post['is_owner'] == true,
                   content:
@@ -453,6 +660,11 @@ class _CommunityFeedScreenState
                   ),
                   onDelete: () {
                     _deletePost(
+                      post['id'] as int,
+                    );
+                  },
+                  onReport: () {
+                    _reportPost(
                       post['id'] as int,
                     );
                   },
@@ -481,20 +693,20 @@ class _CommunityFeedScreenState
 // ============================================================
 
 class _PostCard extends StatelessWidget {
-  final int communityId;
   final int postId;
   final bool isOwner;
   final String content;
   final String date;
   final VoidCallback onDelete;
+  final VoidCallback onReport;
 
   const _PostCard({
-    required this.communityId,
     required this.postId,
     required this.isOwner,
     required this.content,
     required this.date,
     required this.onDelete,
+    required this.onReport,
   });
 
   @override
@@ -538,17 +750,21 @@ class _PostCard extends StatelessWidget {
                 // THREE-DOT MENU
                 // ==================================================
 
-                if (isOwner)
-                  PopupMenuButton<String>(
-                    icon: const Icon(
-                      Icons.more_vert,
-                    ),
-                    onSelected: (value) {
-                      if (value == 'delete') {
-                        onDelete();
-                      }
-                    },
-                    itemBuilder: (context) => [
+                PopupMenuButton<String>(
+                  icon: const Icon(
+                    Icons.more_vert,
+                  ),
+                  onSelected: (value) {
+                    if (value == 'delete') {
+                      onDelete();
+                    }
+
+                    if (value == 'report') {
+                      onReport();
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    if (isOwner)
                       const PopupMenuItem<String>(
                         value: 'delete',
                         child: Row(
@@ -561,8 +777,22 @@ class _PostCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                    ],
-                  ),
+
+                    if (!isOwner)
+                      const PopupMenuItem<String>(
+                        value: 'report',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.flag_outlined,
+                            ),
+                            SizedBox(width: 10),
+                            Text('Report'),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
               ],
             ),
 

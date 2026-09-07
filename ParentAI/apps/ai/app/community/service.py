@@ -5,7 +5,8 @@ from app.database.models import (
     Community,
     CommunityMember,
     CommunityPost,
-    ModerationEvent
+    ModerationEvent,
+    CommunityPostReport
 )
 from app.community.moderation import (
     moderate_content,
@@ -357,6 +358,133 @@ def delete_post(
         db.commit()
 
         return "deleted"
+
+    except Exception:
+        db.rollback()
+        raise
+
+    finally:
+        db.close()
+
+def report_post(
+    community_id: int,
+    post_id: int,
+    user_id: int,
+    reason: str,
+    details: str | None = None,
+):
+    """
+    Store a user report for a community post.
+
+    Returns:
+        "community_not_found"
+        "post_not_found"
+        "own_post"
+        "already_reported"
+        CommunityPostReport on success
+    """
+
+    db = SessionLocal()
+
+    try:
+        print(
+            f"REPORT DEBUG: community_id={community_id}, post_id={post_id}"
+        )
+
+        all_posts = (
+        db.query(CommunityPost)
+        .order_by(CommunityPost.id.desc())
+    .   all()
+        )       
+
+        print(
+    "REPORT DEBUG: posts=",
+    [
+        {
+            "id": post.id,
+            "community_id": post.community_id,
+            "user_id": post.user_id,
+        }
+        for post in all_posts
+    ],
+)
+        
+        # ------------------------------------------------------
+        # 1. Verify community exists
+        # ------------------------------------------------------
+
+        community = (
+            db.query(Community)
+            .filter(
+                Community.id == community_id
+            )
+            .first()
+        )
+
+        if community is None:
+            return "community_not_found"
+
+        # ------------------------------------------------------
+        # 2. Find the post by post ID
+        # ------------------------------------------------------
+
+        post = (
+            db.query(CommunityPost)
+            .filter(
+                CommunityPost.id == post_id
+            )
+            .first()
+        )
+
+        if post is None:
+            return "post_not_found"
+
+        # ------------------------------------------------------
+        # 3. Verify the post belongs to this community
+        # ------------------------------------------------------
+
+        if post.community_id != community_id:
+            return "post_not_found"
+
+        # ------------------------------------------------------
+        # 4. Users cannot report their own post
+        # ------------------------------------------------------
+
+        if post.user_id == user_id:
+            return "own_post"
+
+        # ------------------------------------------------------
+        # 5. Prevent duplicate reports
+        # ------------------------------------------------------
+
+        existing_report = (
+            db.query(CommunityPostReport)
+            .filter(
+                CommunityPostReport.post_id == post_id,
+                CommunityPostReport.reporter_user_id == user_id,
+            )
+            .first()
+        )
+
+        if existing_report is not None:
+            return "already_reported"
+
+        # ------------------------------------------------------
+        # 6. Create report
+        # ------------------------------------------------------
+
+        report = CommunityPostReport(
+            post_id=post_id,
+            reporter_user_id=user_id,
+            reason=reason,
+            details=details,
+        )
+
+        db.add(report)
+        db.commit()
+        db.refresh(report)
+
+        return report
 
     except Exception:
         db.rollback()

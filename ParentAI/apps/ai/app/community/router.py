@@ -11,7 +11,8 @@ from app.community.schemas import (
     CommunityResponse,
     CreatePostRequest,
     PostResponse,
-    PostFeedResponse
+    PostFeedResponse,
+    ReportPostRequest,
 )
 
 from app.community.service import (
@@ -21,6 +22,7 @@ from app.community.service import (
     create_post,
     get_community_posts,
     delete_post,
+    report_post,
 )
 
 
@@ -29,6 +31,10 @@ router = APIRouter(
     tags=["Community"],
 )
 
+
+# ============================================================
+# Communities
+# ============================================================
 
 @router.get(
     "",
@@ -59,7 +65,7 @@ def join(
         )
 
     return {
-        "message": "Joined community successfully."
+        "message": "Joined community successfully.",
     }
 
 
@@ -82,9 +88,13 @@ def leave(
         )
 
     return {
-        "message": "Left community successfully."
+        "message": "Left community successfully.",
     }
 
+
+# ============================================================
+# Posts
+# ============================================================
 
 @router.post(
     "/{community_id}/posts",
@@ -141,6 +151,8 @@ def create_community_post(
             )
 
     return result
+
+
 @router.get(
     "/{community_id}/posts",
     response_model=list[PostFeedResponse],
@@ -162,7 +174,14 @@ def list_community_posts(
 
     return posts
 
-@router.delete("/{community_id}/posts/{post_id}")
+
+# ============================================================
+# Delete Post
+# ============================================================
+
+@router.delete(
+    "/{community_id}/posts/{post_id}",
+)
 def delete_community_post(
     community_id: int,
     post_id: int,
@@ -192,4 +211,56 @@ def delete_community_post(
             detail="You can only delete your own posts.",
         )
 
-    return {"message": "Post deleted successfully."}
+    return {
+        "message": "Post deleted successfully.",
+    }
+
+
+# ============================================================
+# Report Post
+# ============================================================
+
+@router.post(
+    "/{community_id}/posts/{post_id}/report",
+)
+def report_community_post(
+    community_id: int,
+    post_id: int,
+    request: ReportPostRequest,
+    user_id: int = Depends(get_current_user_id),
+):
+    result = report_post(
+        community_id=community_id,
+        post_id=post_id,
+        user_id=user_id,
+        reason=request.reason,
+        details=request.details,
+    )
+
+    if result == "community_not_found":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Community not found.",
+        )
+
+    if result == "post_not_found":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found.",
+        )
+
+    if result == "own_post":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot report your own post.",
+        )
+
+    if result == "already_reported":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You have already reported this post.",
+        )
+
+    return {
+        "message": "Report submitted successfully.",
+    }

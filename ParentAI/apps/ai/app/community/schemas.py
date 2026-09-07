@@ -35,3 +35,14 @@ class PostFeedResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     is_owner: bool
+
+class ReportPostRequest(BaseModel):
+    reason: str = Field(
+        min_length=1,
+        max_length=50,
+    )
+
+    details: str | None = Field(
+        default=None,
+        max_length=1000,
+    )
