@@ -28,7 +28,31 @@ class _PregnancyWeekScreenState
   Map<String, dynamic>? _data;
   bool _loading = true;
   String? _error;
+String _babyDevelopmentAsset(String week) {
+  final weekNumber = int.tryParse(week) ?? 1;
 
+  if (weekNumber <= 4) {
+    return 'assets/images/pregnancy_week_04.png';
+  } else if (weekNumber <= 8) {
+    return 'assets/images/pregnancy_week_08.png';
+  } else if (weekNumber <= 12) {
+    return 'assets/images/pregnancy_week_12.png';
+  } else if (weekNumber <= 16) {
+    return 'assets/images/pregnancy_week_16.png';
+  } else if (weekNumber <= 20) {
+    return 'assets/images/pregnancy_week_20.png';
+  } else if (weekNumber <= 24) {
+    return 'assets/images/pregnancy_week_24.png';
+  } else if (weekNumber <= 28) {
+    return 'assets/images/pregnancy_week_28.png';
+  } else if (weekNumber <= 32) {
+    return 'assets/images/pregnancy_week_32.png';
+  } else if (weekNumber <= 36) {
+    return 'assets/images/pregnancy_week_36.png';
+  } else {
+    return 'assets/images/pregnancy_week_40.png';
+  }
+}
   @override
   void initState() {
     super.initState();
@@ -321,7 +345,7 @@ Widget build(BuildContext context) {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
                   child: Image.asset(
-                    'assets/images/pregnancy_week_$week.png',
+                   _babyDevelopmentAsset(week),
                     fit: BoxFit.contain,
 
                     // Until we add the actual artwork,

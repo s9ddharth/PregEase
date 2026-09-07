@@ -5,6 +5,7 @@ from app.api.auth import router as auth_router
 from app.api.chat import router as chat_router
 from app.config.settings import settings
 from app.api.pregnancy import router as pregnancy_router
+from app.community.router import router as community_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -29,7 +30,7 @@ app.add_middleware(
 app.include_router(chat_router)
 app.include_router(auth_router)
 app.include_router(pregnancy_router)
-
+app.include_router(community_router)
 
 @app.get("/")
 def root():

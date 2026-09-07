@@ -3,7 +3,7 @@ import 'pregnancy_week_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'community_feed_screen.dart';
 
 // ============================================================
 // API CONFIGURATION
@@ -1657,7 +1657,7 @@ if (!_isPregnancyProfileLoading &&
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.05),
+          color: Colors.black.withValues(alpha: 0.05),
           blurRadius: 18,
           offset: const Offset(0, 8),
         ),
@@ -1835,7 +1835,7 @@ Container(
     borderRadius: BorderRadius.circular(28),
     boxShadow: [
       BoxShadow(
-        color: const Color(0xFF2196F3).withOpacity(0.18),
+        color: const Color(0xFF2196F3).withValues(alpha: 0.18),
         blurRadius: 18,
         offset: const Offset(0, 8),
       ),
@@ -1868,7 +1868,7 @@ Container(
               vertical: 6,
             ),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Row(
@@ -4545,216 +4545,485 @@ class _ChatScreenState
 // COMMUNITY
 // ============================================================
 
-class CommunityScreen
-    extends StatelessWidget {
+class CommunityScreen extends StatefulWidget {
+  const CommunityScreen({super.key});
 
-  const CommunityScreen({
-    super.key,
-  });
+  @override
+  State<CommunityScreen> createState() =>
+      _CommunityScreenState();
+}
 
+class _CommunityScreenState
+    extends State<CommunityScreen> {
+  List<Map<String, dynamic>> _communities = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCommunities();
+  }
+
+  Future<void> _loadCommunities() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse('$apiBaseUrl/community'),
+        headers: await authHeaders(),
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as List;
+
+        setState(() {
+          _communities = data
+              .map(
+                (item) =>
+                    Map<String, dynamic>.from(item),
+              )
+              .toList();
+
+          _loading = false;
+        });
+      } else if (response.statusCode == 401) {
+        setState(() {
+          _error = 'Please log in again.';
+          _loading = false;
+        });
+      } else {
+        setState(() {
+          _error = 'Unable to load communities.';
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _error = 'Could not connect to the server.';
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _toggleCommunity(
+    Map<String, dynamic> community,
+  ) async {
+    final int communityId =
+        community['id'] as int;
+
+    final bool joined =
+        community['joined'] == true;
+
+    final String url =
+        '$apiBaseUrl/community/$communityId/join';
+
+    try {
+      final response = joined
+          ? await http.delete(
+              Uri.parse(url),
+              headers: await authHeaders(),
+            )
+          : await http.post(
+              Uri.parse(url),
+              headers: await authHeaders(),
+            );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        await _loadCommunities();
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              joined
+                  ? 'You left ${community['name']}.'
+                  : 'You joined ${community['name']}!',
+            ),
+          ),
+        );
+      } else if (response.statusCode == 401) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Your session has expired. Please log in again.',
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Unable to update community membership.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not connect to the server.',
+          ),
+        ),
+      );
+    }
+  }
+
+  void _openCommunity(
+    Map<String, dynamic> community,
+  ) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CommunityFeedScreen(
+          communityId: community['id'] as int,
+          communityName:
+              community['name'] as String,
+          description:
+              community['description'] as String? ?? '',
+          memberCount:
+              community['member_count'] as int? ?? 0,
+        ),
+      ),
+    );
+  }
+
+  IconData _communityIcon(String name) {
+    switch (name) {
+      case 'Pregnancy':
+        return Icons.pregnant_woman;
+
+      case 'New Parents':
+        return Icons.child_care;
+
+      case 'Baby Sleep':
+        return Icons.nightlight;
+
+      case 'Baby Nutrition':
+        return Icons.restaurant;
+
+      default:
+        return Icons.groups;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-
     return SafeArea(
+      child: RefreshIndicator(
+        onRefresh: _loadCommunities,
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            const Text(
+              'Community',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
 
-      child:
-          ListView(
+            const SizedBox(height: 6),
 
-        padding:
-            const EdgeInsets.all(
-          20,
+            const Text(
+              'Connect with other parents',
+              style: TextStyle(
+                color: Colors.grey,
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            if (_loading)
+              const Padding(
+                padding: EdgeInsets.only(top: 40),
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_error != null)
+              _CommunityError(
+                message: _error!,
+                onRetry: _loadCommunities,
+              )
+            else if (_communities.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 40),
+                child: Center(
+                  child: Text(
+                    'No communities available.',
+                  ),
+                ),
+              )
+            else
+              ..._communities.map(
+                (community) {
+                  return _CommunityCard(
+                    icon: _communityIcon(
+                      community['name'] as String,
+                    ),
+                    title:
+                        community['name'] as String,
+                    description:
+                        community['description']
+                                as String? ??
+                            '',
+                    memberCount:
+                        community['member_count']
+                                as int? ??
+                            0,
+                    joined:
+                        community['joined'] == true,
+
+                    // Tap card -> community feed
+                    onTap: () {
+                      _openCommunity(community);
+                    },
+
+                    // Join / Leave button
+                    onToggle: () {
+                      _toggleCommunity(community);
+                    },
+                  );
+                },
+              ),
+          ],
         ),
-
-        children: [
-
-          const Text(
-            'Community',
-
-            style:
-                TextStyle(
-              fontSize: 28,
-              fontWeight:
-                  FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(
-            height: 6,
-          ),
-
-          const Text(
-            'Connect with other parents',
-
-            style:
-                TextStyle(
-              color:
-                  Colors.grey,
-            ),
-          ),
-
-          const SizedBox(
-            height: 24,
-          ),
-
-          const _CommunityCard(
-            icon:
-                Icons.pregnant_woman,
-            title:
-                'Pregnancy',
-            members:
-                '2.4K parents',
-          ),
-
-          const _CommunityCard(
-            icon:
-                Icons.child_care,
-            title:
-                'New Parents',
-            members:
-                '4.1K parents',
-          ),
-
-          const _CommunityCard(
-            icon:
-                Icons.nightlight,
-            title:
-                'Baby Sleep',
-            members:
-                '1.8K parents',
-          ),
-
-          const _CommunityCard(
-            icon:
-                Icons.restaurant,
-            title:
-                'Baby Nutrition',
-            members:
-                '1.2K parents',
-          ),
-        ],
       ),
     );
   }
 }
 
 
-class _CommunityCard
-    extends StatelessWidget {
+// ============================================================
+// COMMUNITY CARD
+// ============================================================
 
+class _CommunityCard extends StatelessWidget {
   final IconData icon;
-
   final String title;
+  final String description;
+  final int memberCount;
+  final bool joined;
 
-  final String members;
-
+  final VoidCallback onTap;
+  final VoidCallback onToggle;
 
   const _CommunityCard({
     required this.icon,
     required this.title,
-    required this.members,
+    required this.description,
+    required this.memberCount,
+    required this.joined,
+    required this.onTap,
+    required this.onToggle,
   });
-
 
   @override
   Widget build(BuildContext context) {
-
     return Container(
-
-      margin:
-          const EdgeInsets.only(
+      margin: const EdgeInsets.only(
         bottom: 14,
       ),
-
-      padding:
-          const EdgeInsets.all(
-        18,
-      ),
-
-      decoration:
-          BoxDecoration(
-        color:
-            Colors.white,
-        borderRadius:
-            BorderRadius.circular(
-          18,
-        ),
-      ),
-
-      child:
-          Row(
-
-        children: [
-
-          CircleAvatar(
-
-            radius:
-                27,
-
-            backgroundColor:
-                const Color(
-              0xFFE6F4FF,
-            ),
-
-            child:
-                Icon(
-              icon,
-              color:
-                  const Color(
-                0xFF2196F3,
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              borderRadius:
+                  BorderRadius.circular(18),
+              border: Border.all(
+                color: const Color(
+                  0xFFEAF1F8,
+                ),
               ),
             ),
-          ),
-
-          const SizedBox(
-            width: 16,
-          ),
-
-          Expanded(
-
-            child:
-                Column(
-
+            child: Column(
               crossAxisAlignment:
-                  CrossAxisAlignment
-                      .start,
-
+                  CrossAxisAlignment.start,
               children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 27,
+                      backgroundColor:
+                          const Color(
+                        0xFFE6F4FF,
+                      ),
+                      child: Icon(
+                        icon,
+                        color: const Color(
+                          0xFF2196F3,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 16),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style:
+                                const TextStyle(
+                              fontSize: 17,
+                              fontWeight:
+                                  FontWeight.bold,
+                            ),
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          Text(
+                            '$memberCount members',
+                            style:
+                                const TextStyle(
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Colors.grey,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
 
                 Text(
-                  title,
-
-                  style:
-                      const TextStyle(
-                    fontSize:
-                        17,
-                    fontWeight:
-                        FontWeight.bold,
+                  description,
+                  style: const TextStyle(
+                    color: Colors.black54,
+                    height: 1.35,
                   ),
                 ),
 
-                const SizedBox(
-                  height: 4,
-                ),
+                const SizedBox(height: 14),
 
-                Text(
-                  members,
-
-                  style:
-                      const TextStyle(
-                    color:
-                        Colors.grey,
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onToggle,
+                    style:
+                        ElevatedButton.styleFrom(
+                      backgroundColor: joined
+                          ? Colors.white
+                          : const Color(
+                              0xFF2196F3,
+                            ),
+                      foregroundColor: joined
+                          ? const Color(
+                              0xFF2196F3,
+                            )
+                          : Colors.white,
+                      side: joined
+                          ? const BorderSide(
+                              color: Color(
+                                0xFF2196F3,
+                              ),
+                            )
+                          : null,
+                      elevation: 0,
+                      padding:
+                          const EdgeInsets.symmetric(
+                        vertical: 12,
+                      ),
+                      shape:
+                          RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(
+                          12,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      joined
+                          ? 'Leave Community'
+                          : 'Join Community',
+                    ),
                   ),
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
 
-          const Icon(
-            Icons.arrow_forward_ios,
-            size: 16,
-          ),
-        ],
+
+// ============================================================
+// COMMUNITY ERROR
+// ============================================================
+
+class _CommunityError
+    extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _CommunityError({
+    required this.message,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding:
+            const EdgeInsets.only(top: 40),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.cloud_off,
+              size: 48,
+              color: Colors.grey,
+            ),
+
+            const SizedBox(height: 12),
+
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.grey,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            OutlinedButton(
+              onPressed: onRetry,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
       ),
     );
   }
