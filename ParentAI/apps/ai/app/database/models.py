@@ -496,46 +496,6 @@ class ModerationEvent(Base):
 
     user: Mapped["User"] = relationship()
 
-class CommunityPostReport(Base):
-    __tablename__ = "community_post_reports"
-
-    id: Mapped[int] = mapped_column(
-        primary_key=True,
-        autoincrement=True,
-    )
-
-    post_id: Mapped[int] = mapped_column(
-        ForeignKey(
-            "community_posts.id",
-            ondelete="CASCADE",
-        ),
-        nullable=False,
-    )
-
-    reporter_user_id: Mapped[int] = mapped_column(
-        ForeignKey(
-            "users.id",
-            ondelete="CASCADE",
-        ),
-        nullable=False,
-    )
-
-    reason: Mapped[str] = mapped_column(
-        String(50),
-        nullable=False,
-    )
-
-    details: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-    )
-
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        nullable=False,
-        default=ist_now,
-    )
-
 class CommunityModerationRule(Base):
     __tablename__ = "community_moderation_rules"
 
@@ -575,6 +535,46 @@ class CommunityModerationRule(Base):
         Boolean,
         nullable=False,
         default=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=ist_now,
+    )
+class CommunityPostReport(Base):
+    __tablename__ = "community_post_reports"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    post_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "community_posts.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+    )
+
+    reporter_user_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+    )
+
+    reason: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+    )
+
+    details: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(
