@@ -27,7 +27,6 @@ class CommunityFeedScreen extends StatefulWidget {
 class _CommunityFeedScreenState
     extends State<CommunityFeedScreen> {
   List<Map<String, dynamic>> _posts = [];
-
   bool _loading = true;
   String? _error;
 
@@ -36,6 +35,10 @@ class _CommunityFeedScreenState
     super.initState();
     _loadPosts();
   }
+
+  // ==========================================================
+  // LOAD POSTS
+  // ==========================================================
 
   Future<void> _loadPosts() async {
     setState(() {
@@ -96,159 +99,274 @@ class _CommunityFeedScreenState
   // CREATE POST
   // ==========================================================
 
-Future<void> _createPost() async {
-  final controller = TextEditingController();
+  Future<void> _createPost() async {
+    final controller = TextEditingController();
 
-  final content = await showDialog<String>(
-    context: context,
-    builder: (dialogContext) {
-      return AlertDialog(
-        title: const Text('Create Post'),
-        content: TextField(
-          controller: controller,
-          maxLines: 6,
-          maxLength: 2000,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText:
-                'What would you like to share with the community?',
-            border: OutlineInputBorder(),
+    final content = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Create Post'),
+          content: TextField(
+            controller: controller,
+            maxLines: 6,
+            maxLength: 2000,
+            autofocus: true,
+            decoration: const InputDecoration(
+              hintText:
+                  'What would you like to share with the community?',
+              border: OutlineInputBorder(),
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-            },
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final text = controller.text.trim();
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final text = controller.text.trim();
 
-              if (text.isEmpty) {
-                ScaffoldMessenger.of(dialogContext)
-                    .showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Please enter some text.',
+                if (text.isEmpty) {
+                  ScaffoldMessenger.of(dialogContext)
+                      .showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Please enter some text.',
+                      ),
                     ),
-                  ),
+                  );
+                  return;
+                }
+
+                Navigator.pop(
+                  dialogContext,
+                  text,
                 );
-                return;
-              }
-
-              Navigator.pop(
-                dialogContext,
-                text,
-              );
-            },
-            child: const Text('Post'),
-          ),
-        ],
-      );
-    },
-  );
-
-  controller.dispose();
-
-  if (!mounted || content == null) {
-    return;
-  }
-
-  await _submitPost(content);
-}
-
- Future<void> _submitPost(String content) async {
-  try {
-    final headers = {
-      ...await authHeaders(),
-      'Content-Type': 'application/json',
-    };
-
-    final response = await http.post(
-      Uri.parse(
-        '$apiBaseUrl/community/${widget.communityId}/posts',
-      ),
-      headers: headers,
-      body: jsonEncode({
-        'content': content,
-      }),
+              },
+              child: const Text('Post'),
+            ),
+          ],
+        );
+      },
     );
 
-    if (!mounted) return;
+    controller.dispose();
 
-    debugPrint(
-      'CREATE POST STATUS: ${response.statusCode}',
-    );
-
-    debugPrint(
-      'CREATE POST RESPONSE: ${response.body}',
-    );
-
-    if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Post created successfully!',
-          ),
-        ),
-      );
-
-      await _loadPosts();
+    if (!mounted || content == null) {
       return;
     }
 
-    // Show the actual backend response.
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(
-            'Post failed (${response.statusCode})',
-          ),
-          content: SingleChildScrollView(
-            child: SelectableText(
-              response.body.isEmpty
-                  ? 'The server returned an empty response.'
-                  : response.body,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  } catch (e) {
-    if (!mounted) return;
-
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Connection Error'),
-          content: Text(
-            e.toString(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
+    await _submitPost(content);
   }
-}
+
+  // ==========================================================
+  // SUBMIT POST
+  // ==========================================================
+
+  Future<void> _submitPost(String content) async {
+    try {
+      final headers = {
+        ...await authHeaders(),
+        'Content-Type': 'application/json',
+      };
+
+      final response = await http.post(
+        Uri.parse(
+          '$apiBaseUrl/community/${widget.communityId}/posts',
+        ),
+        headers: headers,
+        body: jsonEncode({
+          'content': content,
+        }),
+      );
+
+      if (!mounted) return;
+
+      debugPrint(
+        'CREATE POST STATUS: ${response.statusCode}',
+      );
+
+      debugPrint(
+        'CREATE POST RESPONSE: ${response.body}',
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Post created successfully!',
+            ),
+          ),
+        );
+
+        await _loadPosts();
+        return;
+      }
+
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: Text(
+              'Post failed (${response.statusCode})',
+            ),
+            content: SingleChildScrollView(
+              child: SelectableText(
+                response.body.isEmpty
+                    ? 'The server returned an empty response.'
+                    : response.body,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Connection Error'),
+            content: Text(
+              e.toString(),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  // ==========================================================
+  // DELETE POST
+  // ==========================================================
+
+  Future<void> _deletePost(int postId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete post?'),
+          content: const Text(
+            'This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  false,
+                );
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  true,
+                );
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted || confirmed != true) {
+      return;
+    }
+
+    try {
+      final response = await http.delete(
+        Uri.parse(
+          '$apiBaseUrl/community/'
+          '${widget.communityId}/posts/$postId',
+        ),
+        headers: await authHeaders(),
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Post deleted successfully.',
+            ),
+          ),
+        );
+
+        await _loadPosts();
+        return;
+      }
+
+      if (response.statusCode == 403) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'You can only delete your own posts.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      if (response.statusCode == 404) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Post not found.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to delete post '
+            '(${response.statusCode}).',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not connect to the server.',
+          ),
+        ),
+      );
+    }
+  }
+
+  // ==========================================================
+  // DATE FORMAT
+  // ==========================================================
 
   String _formatDate(String? value) {
     if (value == null) return '';
@@ -260,13 +378,16 @@ Future<void> _createPost() async {
     return '${date.day}/${date.month}/${date.year}';
   }
 
+  // ==========================================================
+  // BUILD
+  // ==========================================================
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.communityName),
       ),
-
       body: RefreshIndicator(
         onRefresh: _loadPosts,
         child: ListView(
@@ -322,11 +443,19 @@ Future<void> _createPost() async {
             else
               ..._posts.map(
                 (post) => _PostCard(
+                  communityId: widget.communityId,
+                  postId: post['id'] as int,
+                  isOwner: post['is_owner'] == true,
                   content:
                       post['content'] as String? ?? '',
                   date: _formatDate(
                     post['created_at'] as String?,
                   ),
+                  onDelete: () {
+                    _deletePost(
+                      post['id'] as int,
+                    );
+                  },
                 ),
               ),
           ],
@@ -347,18 +476,25 @@ Future<void> _createPost() async {
   }
 }
 
-
 // ============================================================
 // POST CARD
 // ============================================================
 
 class _PostCard extends StatelessWidget {
+  final int communityId;
+  final int postId;
+  final bool isOwner;
   final String content;
   final String date;
+  final VoidCallback onDelete;
 
   const _PostCard({
+    required this.communityId,
+    required this.postId,
+    required this.isOwner,
     required this.content,
     required this.date,
+    required this.onDelete,
   });
 
   @override
@@ -397,6 +533,36 @@ class _PostCard extends StatelessWidget {
                     fontSize: 12,
                   ),
                 ),
+
+                // ==================================================
+                // THREE-DOT MENU
+                // ==================================================
+
+                if (isOwner)
+                  PopupMenuButton<String>(
+                    icon: const Icon(
+                      Icons.more_vert,
+                    ),
+                    onSelected: (value) {
+                      if (value == 'delete') {
+                        onDelete();
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.delete_outline,
+                            ),
+                            SizedBox(width: 10),
+                            Text('Delete'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
               ],
             ),
 
@@ -414,7 +580,6 @@ class _PostCard extends StatelessWidget {
     );
   }
 }
-
 
 // ============================================================
 // FEED ERROR
