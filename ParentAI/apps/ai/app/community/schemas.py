@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, field_validator
 class CreateCommunityRuleRequest(BaseModel):
     title: str = Field(min_length=1, max_length=150)
     description: str = Field(min_length=1, max_length=2000)
+    sort_order: int = Field(default=0, ge=0)
 
     @field_validator("title", "description")
     @classmethod
@@ -23,13 +24,17 @@ class CreateCommunityRequest(BaseModel):
     icon_url: str | None = Field(default=None, max_length=500)
     visibility: str = Field(default="public", max_length=20)
     membership_mode: str = Field(default="open", max_length=20)
-    rules: list[CreateCommunityRuleRequest] = Field(default_factory=list, max_length=20)
+    rules: list[CreateCommunityRuleRequest] = Field(
+        default_factory=list,
+        max_length=20,
+    )
 
     @field_validator("name", "category", "description", "icon_url")
     @classmethod
-    def strip_optional_text(cls, value):
+    def strip_optional_text(cls, value: str | None) -> str | None:
         if value is None:
-            return value
+            return None
+
         value = value.strip()
         return value or None
 
@@ -53,6 +58,24 @@ class CommunityResponse(BaseModel):
     role: str | None = None
     status: str | None = None
     created_by: int | None = None
+
+
+class CommunityDetailsResponse(BaseModel):
+    id: int
+    name: str
+    description: str | None
+    category: str | None = None
+    icon_url: str | None = None
+    visibility: str = "public"
+    membership_mode: str = "open"
+    slug: str | None = None
+    member_count: int
+    joined: bool
+    role: str | None = None
+    status: str | None = None
+    created_by: int | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
 
 
 class CreatePostRequest(BaseModel):
@@ -86,6 +109,7 @@ class ReportPostRequest(BaseModel):
 class TransferOwnershipRequest(BaseModel):
     new_owner_user_id: int = Field(gt=0)
 
+
 class CommunityRuleResponse(BaseModel):
     id: int
     community_id: int
@@ -96,38 +120,12 @@ class CommunityRuleResponse(BaseModel):
     updated_at: datetime
 
 
-class CreateCommunityRuleRequest(BaseModel):
-    title: str = Field(
-        min_length=1,
-        max_length=150,
-    )
-
-    description: str = Field(
-        min_length=1,
-        max_length=2000,
-    )
-
-    sort_order: int = Field(
-        default=0,
-        ge=0,
-    )
-
-
 class UpdateCommunityRuleRequest(BaseModel):
-    title: str = Field(
-        min_length=1,
-        max_length=150,
-    )
+    title: str = Field(min_length=1, max_length=150)
+    description: str = Field(min_length=1, max_length=2000)
+    sort_order: int = Field(default=0, ge=0)
 
-    description: str = Field(
-        min_length=1,
-        max_length=2000,
-    )
 
-    sort_order: int = Field(
-        default=0,
-        ge=0,
-    )
 class CommentResponse(BaseModel):
     id: int
     post_id: int
@@ -145,11 +143,14 @@ class CreateCommentRequest(BaseModel):
 class ReportCommentRequest(BaseModel):
     reason: str = Field(min_length=1, max_length=50)
     details: str | None = Field(default=None, max_length=1000)
+
+
 class CommunityMemberResponse(BaseModel):
     user_id: int
     name: str | None = None
     role: str
     joined_at: datetime
+
 
 class CommunityReportResponse(BaseModel):
     report_id: int
@@ -160,6 +161,7 @@ class CommunityReportResponse(BaseModel):
     details: str | None = None
     status: str
     created_at: datetime
+
 
 class ResolveCommunityReportRequest(BaseModel):
     action: str = Field(min_length=1, max_length=20)

@@ -542,42 +542,6 @@ class CommunityCommentLike(Base):
         ),
     )
 
-
-class CommunityCommentReport(Base):
-    __tablename__ = "community_comment_reports"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
-    comment_id = Column(
-        Integer,
-        ForeignKey("community_comments.id", ondelete="CASCADE"),
-        nullable=False,
-    )
-
-    reporter_user_id = Column(
-        Integer,
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
-    )
-
-    reason = Column(String(50), nullable=False)
-    details = Column(Text, nullable=True)
-
-    created_at = Column(
-        DateTime,
-        nullable=False,
-        server_default=func.current_timestamp(),
-    )
-
-    __table_args__ = (
-        UniqueConstraint(
-            "comment_id",
-            "reporter_user_id",
-            name="uq_comment_report_user",
-        ),
-    )
-
-
 class ModerationEvent(Base):
     __tablename__ = "moderation_events"
 
@@ -708,33 +672,6 @@ class CommunityPostReport(Base):
     status = Column(String(20), nullable=False, default="open")
 
     
-class CommunityCommentLike(Base):
-    __tablename__ = "community_comment_likes"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    comment_id = Column(
-        Integer,
-        ForeignKey("community_comments.id", ondelete="CASCADE"),
-        nullable=False,
-    )
-    user_id = Column(
-        Integer,
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
-    )
-    created_at = Column(
-        DateTime,
-        nullable=False,
-        server_default=func.current_timestamp(),
-    )
-
-    __table_args__ = (
-        UniqueConstraint(
-            "comment_id",
-            "user_id",
-            name="uq_comment_like",
-        ),
-    )
 
 
 class CommunityCommentReport(Base):

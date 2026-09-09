@@ -24,11 +24,38 @@ class CommunityFeedScreen extends StatefulWidget {
       _CommunityFeedScreenState();
 }
 
-class _CommunityFeedScreenState
-    extends State<CommunityFeedScreen> {
+class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
+  // ==========================================================
+  // PREG EASE COLORS
+  // ==========================================================
+
+  static const Color violet = Color(0xFF6C5CE7);
+  static const Color violetDeep = Color(0xFF4C3FBF);
+  static const Color violetPale = Color(0xFFEFECFC);
+
+  static const Color pink = Color(0xFFFADCE0);
+  static const Color pinkInk = Color(0xFFC4577A);
+
+  static const Color ink = Color(0xFF241F35);
+  static const Color inkSoft = Color(0xFF6B667F);
+
+  static const Color background = Color(0xFFFBF9FC);
+  static const Color line = Color(0x1A241F35);
+
+  // ==========================================================
+  // STATE
+  // ==========================================================
+
   List<Map<String, dynamic>> _posts = [];
+
   bool _loading = true;
   String? _error;
+
+  int _selectedTab = 0;
+
+  // ==========================================================
+  // LIFECYCLE
+  // ==========================================================
 
   @override
   void initState() {
@@ -41,10 +68,12 @@ class _CommunityFeedScreenState
   // ==========================================================
 
   Future<void> _loadPosts() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
 
     try {
       final response = await http.get(
@@ -57,13 +86,16 @@ class _CommunityFeedScreenState
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List;
+        final decoded = jsonDecode(response.body);
+
+        final List<dynamic> data =
+            decoded is List ? decoded : [];
 
         setState(() {
           _posts = data
+              .whereType<Map>()
               .map(
-                (item) =>
-                    Map<String, dynamic>.from(item),
+                (item) => Map<String, dynamic>.from(item),
               )
               .toList();
 
@@ -86,6 +118,8 @@ class _CommunityFeedScreenState
         });
       }
     } catch (e) {
+      debugPrint('Community feed error: $e');
+
       if (!mounted) return;
 
       setState(() {
@@ -105,79 +139,149 @@ class _CommunityFeedScreenState
     final content = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Create Post'),
-          content: TextField(
-            controller: controller,
-            maxLines: 6,
-            maxLength: 2000,
-            autofocus: true,
-            decoration: const InputDecoration(
-              hintText:
-                  'What would you like to share with the community?',
-              border: OutlineInputBorder(),
-            ),
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final text = controller.text.trim();
-
-                if (text.isEmpty) {
-                  ScaffoldMessenger.of(dialogContext)
-                      .showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Please enter some text.',
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: violetPale,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: const Icon(
+                        Icons.edit_rounded,
+                        color: violet,
                       ),
                     ),
-                  );
-                  return;
-                }
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Text(
+                        'Start a conversation',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: ink,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Share something with other parents in this community.',
+                  style: TextStyle(
+                    color: inkSoft,
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: controller,
+                  maxLines: 6,
+                  maxLength: 2000,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: 'What would you like to share?',
+                    hintStyle: const TextStyle(
+                      color: inkSoft,
+                    ),
+                    filled: true,
+                    fillColor: background,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      borderSide: const BorderSide(
+                        color: violet,
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                      },
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: inkSoft,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: violet,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 13,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        final text = controller.text.trim();
 
-                Navigator.pop(
-                  dialogContext,
-                  text,
-                );
-              },
-              child: const Text('Post'),
+                        if (text.isEmpty) {
+                          return;
+                        }
+
+                        Navigator.pop(dialogContext, text);
+                      },
+                      child: const Text(
+                        'Post',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
 
     controller.dispose();
 
-    if (!mounted || content == null) {
+    if (content == null || content.trim().isEmpty) {
       return;
     }
 
-    await _submitPost(content);
+    await _submitPost(content.trim());
   }
-
-  // ==========================================================
-  // SUBMIT POST
-  // ==========================================================
 
   Future<void> _submitPost(String content) async {
     try {
-      final headers = {
-        ...await authHeaders(),
-        'Content-Type': 'application/json',
-      };
-
       final response = await http.post(
         Uri.parse(
           '$apiBaseUrl/community/${widget.communityId}/posts',
         ),
-        headers: headers,
+        headers: await authHeaders(),
         body: jsonEncode({
           'content': content,
         }),
@@ -185,71 +289,33 @@ class _CommunityFeedScreenState
 
       if (!mounted) return;
 
-      debugPrint(
-        'CREATE POST STATUS: ${response.statusCode}',
-      );
-
-      debugPrint(
-        'CREATE POST RESPONSE: ${response.body}',
-      );
-
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Post created successfully!',
-            ),
-          ),
+      if (response.statusCode == 200 ||
+          response.statusCode == 201) {
+        _showMessage(
+          'Your post was created successfully.',
         );
 
         await _loadPosts();
-        return;
+      } else if (response.statusCode == 401) {
+        _showMessage(
+          'Your login session has expired.',
+        );
+      } else if (response.statusCode == 403) {
+        _showMessage(
+          'You need to be a member to post here.',
+        );
+      } else {
+        _showMessage(
+          'Unable to create your post.',
+        );
       }
-
-      await showDialog<void>(
-        context: context,
-        builder: (dialogContext) {
-          return AlertDialog(
-            title: Text(
-              'Post failed (${response.statusCode})',
-            ),
-            content: SingleChildScrollView(
-              child: SelectableText(
-                response.body.isEmpty
-                    ? 'The server returned an empty response.'
-                    : response.body,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
     } catch (e) {
+      debugPrint('Create post error: $e');
+
       if (!mounted) return;
 
-      await showDialog<void>(
-        context: context,
-        builder: (dialogContext) {
-          return AlertDialog(
-            title: const Text('Connection Error'),
-            content: Text(e.toString()),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
+      _showMessage(
+        'Could not connect to the server.',
       );
     }
   }
@@ -263,26 +329,43 @@ class _CommunityFeedScreenState
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Delete post?'),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: const Text(
+            'Delete post?',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: ink,
+            ),
+          ),
           content: const Text(
             'This action cannot be undone.',
+            style: TextStyle(
+              color: inkSoft,
+              height: 1.4,
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  false,
-                );
+                Navigator.pop(dialogContext, false);
               },
-              child: const Text('Cancel'),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  color: inkSoft,
+                ),
+              ),
             ),
-            TextButton(
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+              ),
               onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  true,
-                );
+                Navigator.pop(dialogContext, true);
               },
               child: const Text('Delete'),
             ),
@@ -291,73 +374,47 @@ class _CommunityFeedScreenState
       },
     );
 
-    if (!mounted || confirmed != true) {
+    if (confirmed != true) {
       return;
     }
 
     try {
       final response = await http.delete(
         Uri.parse(
-          '$apiBaseUrl/community/'
-          '${widget.communityId}/posts/$postId',
+          '$apiBaseUrl/community/${widget.communityId}/posts/$postId',
         ),
         headers: await authHeaders(),
       );
 
       if (!mounted) return;
 
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Post deleted successfully.',
-            ),
-          ),
+      if (response.statusCode == 200 ||
+          response.statusCode == 204) {
+        setState(() {
+          _posts.removeWhere(
+            (post) => _postId(post) == postId,
+          );
+        });
+
+        _showMessage('Post deleted.');
+      } else if (response.statusCode == 403) {
+        _showMessage(
+          'You can only delete your own post.',
         );
-
-        await _loadPosts();
-        return;
-      }
-
-      if (response.statusCode == 403) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'You can only delete your own posts.',
-            ),
-          ),
+      } else if (response.statusCode == 404) {
+        _showMessage('Post not found.');
+      } else {
+        _showMessage(
+          'Unable to delete the post.',
         );
-        return;
       }
-
-      if (response.statusCode == 404) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Post not found.',
-            ),
-          ),
-        );
-        return;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Unable to delete post '
-            '(${response.statusCode}).',
-          ),
-        ),
-      );
     } catch (e) {
+      debugPrint('Delete post error: $e');
+
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Could not connect to the server.',
-          ),
-        ),
+      _showMessage(
+        'Could not connect to the server.',
       );
     }
   }
@@ -367,223 +424,299 @@ class _CommunityFeedScreenState
   // ==========================================================
 
   Future<void> _reportPost(int postId) async {
-    debugPrint(
-  'REPORT POST: communityId=${widget.communityId}, postId=$postId',
-);
-    final reasons = <String, String>{
-      'harassment': 'Harassment',
-      'hate': 'Hate / discrimination',
-      'spam': 'Spam / scam',
-      'sexual': 'Sexual content',
-      'dangerous_medical':
-          'Dangerous / medical misinformation',
-      'privacy': 'Privacy / doxxing',
-      'violence': 'Violence / threats',
-      'other': 'Other',
-    };
+    String selectedReason = 'spam';
 
+    final detailsController =
+        TextEditingController();
 
-    String? selectedReason;
-    final detailsController = TextEditingController();
-
-    final result = await showDialog<bool>(
+    final result =
+        await showDialog<Map<String, String>>(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (
-            context,
-            setDialogState,
-          ) {
-            return AlertDialog(
-              title: const Text('Report Post'),
-              content: SingleChildScrollView(
+          builder: (context, setDialogState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment:
                       CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Why are you reporting this post?',
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    DropdownButtonFormField<String>(
-                      value: selectedReason,
-                      decoration: const InputDecoration(
-                        labelText: 'Reason',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: reasons.entries
-                          .map(
-                            (entry) =>
-                                DropdownMenuItem<String>(
-                              value: entry.key,
-                              child: Text(entry.value),
+                    Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: pink,
+                            borderRadius:
+                                BorderRadius.circular(15),
+                          ),
+                          child: const Icon(
+                            Icons.flag_outlined,
+                            color: pinkInk,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Text(
+                            'Report post',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: ink,
                             ),
-                          )
-                          .toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Help us keep the community safe and supportive.',
+                      style: TextStyle(
+                        color: inkSoft,
+                        fontSize: 14,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedReason,
+                      decoration: InputDecoration(
+                        labelText: 'Reason',
+                        filled: true,
+                        fillColor: background,
+                        border: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'spam',
+                          child: Text('Spam'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'harassment',
+                          child: Text('Harassment'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'hate',
+                          child: Text('Hate or abuse'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'violence',
+                          child: Text('Violence'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'sexual_content',
+                          child: Text('Sexual content'),
+                        ),
+                        DropdownMenuItem(
+                          value:
+                              'dangerous_medical_content',
+                          child: Text(
+                            'Dangerous medical content',
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'privacy',
+                          child: Text('Privacy concern'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'other',
+                          child: Text('Other'),
+                        ),
+                      ],
                       onChanged: (value) {
+                        if (value == null) {
+                          return;
+                        }
+
                         setDialogState(() {
                           selectedReason = value;
                         });
                       },
                     ),
-
-                    const SizedBox(height: 16),
-
+                    const SizedBox(height: 14),
                     TextField(
                       controller: detailsController,
                       maxLines: 4,
                       maxLength: 1000,
-                      decoration: const InputDecoration(
-                        labelText: 'Additional details (optional)',
+                      decoration: InputDecoration(
+                        labelText:
+                            'Additional details (optional)',
                         hintText:
-                            'Tell us more about the issue.',
-                        border: OutlineInputBorder(),
+                            'Tell us what happened...',
+                        filled: true,
+                        fillColor: background,
+                        border: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(dialogContext);
+                          },
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: inkSoft,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: pinkInk,
+                            foregroundColor: Colors.white,
+                            padding:
+                                const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 13,
+                            ),
+                            shape:
+                                RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(14),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(
+                              dialogContext,
+                              {
+                                'reason': selectedReason,
+                                'details':
+                                    detailsController.text
+                                        .trim(),
+                              },
+                            );
+                          },
+                          child: const Text(
+                            'Submit report',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(
-                      dialogContext,
-                      false,
-                    );
-                  },
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: selectedReason == null
-                      ? null
-                      : () {
-                          Navigator.pop(
-                            dialogContext,
-                            true,
-                          );
-                        },
-                  child: const Text('Report'),
-                ),
-              ],
             );
           },
         );
       },
     );
 
-    if (!mounted || result != true) {
-      detailsController.dispose();
+    detailsController.dispose();
+
+    if (result == null) {
       return;
     }
 
-    final reason = selectedReason!;
-    final details = detailsController.text.trim();
-
-    detailsController.dispose();
-
     try {
-      final headers = {
-        ...await authHeaders(),
-        'Content-Type': 'application/json',
-      };
-
       final response = await http.post(
         Uri.parse(
-          '$apiBaseUrl/community/'
-          '${widget.communityId}/posts/$postId/report',
+          '$apiBaseUrl/community/${widget.communityId}/posts/$postId/report',
         ),
-        headers: headers,
+        headers: await authHeaders(),
         body: jsonEncode({
-          'reason': reason,
-          'details': details.isEmpty ? null : details,
+          'reason': result['reason'],
+          'details': result['details'],
         }),
       );
-      debugPrint(
-  'REPORT RESPONSE: status=${response.statusCode}, body=${response.body}',
-);
 
       if (!mounted) return;
 
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Report submitted successfully.',
-            ),
-          ),
+      if (response.statusCode == 200 ||
+          response.statusCode == 201) {
+        _showMessage(
+          'Thank you. The report has been submitted.',
         );
-        return;
-      }
-
-      if (response.statusCode == 403) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'You cannot report your own post.',
-            ),
-          ),
+      } else if (response.statusCode == 400) {
+        _showMessage(
+          'You cannot report this post.',
         );
-        return;
-      }
-
-      if (response.statusCode == 409) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'You have already reported this post.',
-            ),
-          ),
+      } else if (response.statusCode == 409) {
+        _showMessage(
+          'You have already reported this post.',
         );
-        return;
-      }
-
-      if (response.statusCode == 404) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Post not found.',
-            ),
-          ),
+      } else if (response.statusCode == 404) {
+        _showMessage('Post not found.');
+      } else {
+        _showMessage(
+          'Unable to submit the report.',
         );
-        return;
       }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Unable to report post '
-            '(${response.statusCode}).',
-          ),
-        ),
-      );
     } catch (e) {
+      debugPrint('Report post error: $e');
+
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Could not connect to the server.',
-          ),
-        ),
+      _showMessage(
+        'Could not connect to the server.',
       );
     }
   }
 
   // ==========================================================
-  // DATE FORMAT
+  // HELPERS
   // ==========================================================
 
-  String _formatDate(String? value) {
-    if (value == null) return '';
+  void _showMessage(String message) {
+    if (!mounted) return;
 
-    final date = DateTime.tryParse(value);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      );
+  }
 
-    if (date == null) return '';
+  int _postId(Map<String, dynamic> post) {
+    final value =
+        post['id'] ?? post['post_id'];
 
-    return '${date.day}/${date.month}/${date.year}';
+    if (value is int) {
+      return value;
+    }
+
+    return int.tryParse(
+          value?.toString() ?? '',
+        ) ??
+        0;
+  }
+
+  // ==========================================================
+  // TAB
+  // ==========================================================
+
+  void _selectTab(int index) {
+    setState(() {
+      _selectedTab = index;
+    });
   }
 
   // ==========================================================
@@ -593,96 +726,731 @@ class _CommunityFeedScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: background,
       appBar: AppBar(
-        title: Text(widget.communityName),
+        backgroundColor: background,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: ink,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: const Text(
+          'Community',
+          style: TextStyle(
+            color: ink,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
       ),
+      floatingActionButton: _selectedTab == 0
+          ? FloatingActionButton.extended(
+              onPressed: _createPost,
+              backgroundColor: violet,
+              foregroundColor: Colors.white,
+              icon: const Icon(
+                Icons.add_rounded,
+              ),
+              label: const Text(
+                'Create Post',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            )
+          : null,
       body: RefreshIndicator(
+        color: violet,
         onRefresh: _loadPosts,
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          physics:
+              const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+            18,
+            4,
+            18,
+            110,
+          ),
           children: [
-            Text(
-              widget.communityName,
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 6),
-
-            Text(
-              '${widget.memberCount} members',
-              style: const TextStyle(
-                color: Colors.grey,
-              ),
-            ),
-
-            if (widget.description.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(widget.description),
-            ],
-
-            const SizedBox(height: 24),
-
-            if (_loading)
-              const Padding(
-                padding: EdgeInsets.only(top: 60),
-                child: Center(
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (_error != null)
-              _FeedError(
-                message: _error!,
-                onRetry: _loadPosts,
-              )
-            else if (_posts.isEmpty)
-              const Padding(
-                padding: EdgeInsets.only(top: 60),
-                child: Center(
-                  child: Text(
-                    'No posts yet.\n'
-                    'Be the first to start the conversation!',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              )
+            _buildCommunityHero(),
+            const SizedBox(height: 18),
+            _buildTabs(),
+            const SizedBox(height: 20),
+            if (_selectedTab == 0)
+              _buildPostsTab()
+            else if (_selectedTab == 1)
+              _buildAboutTab()
             else
-              ..._posts.map(
-                (post) => _PostCard(
-                  postId: post['id'] as int,
-                  isOwner: post['is_owner'] == true,
-                  content:
-                      post['content'] as String? ?? '',
-                  date: _formatDate(
-                    post['created_at'] as String?,
-                  ),
-                  onDelete: () {
-                    _deletePost(
-                      post['id'] as int,
-                    );
-                  },
-                  onReport: () {
-                    _reportPost(
-                      post['id'] as int,
-                    );
-                  },
-                ),
-              ),
+              _buildMembersTab(),
           ],
         ),
       ),
+    );
+  }
 
-      // ========================================================
-      // CREATE POST BUTTON
-      // ========================================================
+  // ==========================================================
+  // COMMUNITY HERO
+  // ==========================================================
 
-      floatingActionButton:
-          FloatingActionButton.extended(
-        onPressed: _createPost,
-        icon: const Icon(Icons.add),
-        label: const Text('Create Post'),
+  Widget _buildCommunityHero() {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFF0ECFF),
+            Color(0xFFFFEEF1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: Colors.white,
+          width: 1.5,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x12000000),
+            blurRadius: 22,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color:
+                      Colors.white.withValues(
+                    alpha: 0.9,
+                  ),
+                  borderRadius:
+                      BorderRadius.circular(19),
+                ),
+                child: const Icon(
+                  Icons.groups_rounded,
+                  color: violet,
+                  size: 30,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.communityName,
+                      maxLines: 2,
+                      overflow:
+                          TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: ink,
+                        fontSize: 24,
+                        height: 1.1,
+                        fontWeight:
+                            FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Text(
+                      '${widget.memberCount} members',
+                      style: const TextStyle(
+                        color: violetDeep,
+                        fontWeight:
+                            FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Text(
+            widget.description,
+            style: const TextStyle(
+              color: inkSoft,
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildPill(
+                icon: Icons.public_rounded,
+                text: 'Public',
+                background: Colors.white,
+                foreground: violetDeep,
+              ),
+              _buildPill(
+                icon: Icons.favorite_rounded,
+                text: 'Supportive space',
+                background: Colors.white,
+                foreground: pinkInk,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPill({
+    required IconData icon,
+    required String text,
+    required Color background,
+    required Color foreground,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 8,
+      ),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius:
+            BorderRadius.circular(30),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 15,
+            color: foreground,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              color: foreground,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================================
+  // TABS
+  // ==========================================================
+
+  Widget _buildTabs() {
+    return Container(
+      height: 52,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(18),
+        border: Border.all(
+          color: line,
+        ),
+      ),
+      child: Row(
+        children: [
+          _buildTab(
+            index: 0,
+            icon: Icons.forum_rounded,
+            label: 'Posts',
+          ),
+          _buildTab(
+            index: 1,
+            icon: Icons.info_outline_rounded,
+            label: 'About',
+          ),
+          _buildTab(
+            index: 2,
+            icon: Icons.people_outline_rounded,
+            label: 'Members',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTab({
+    required int index,
+    required IconData icon,
+    required String label,
+  }) {
+    final selected = _selectedTab == index;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _selectTab(index),
+        child: AnimatedContainer(
+          duration:
+              const Duration(milliseconds: 180),
+          decoration: BoxDecoration(
+            color: selected
+                ? violetPale
+                : Colors.transparent,
+            borderRadius:
+                BorderRadius.circular(14),
+          ),
+          child: Row(
+            mainAxisAlignment:
+                MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: selected
+                    ? violetDeep
+                    : inkSoft,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: selected
+                      ? violetDeep
+                      : inkSoft,
+                  fontWeight: selected
+                      ? FontWeight.w800
+                      : FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ==========================================================
+  // POSTS TAB
+  // ==========================================================
+
+  Widget _buildPostsTab() {
+    if (_loading) {
+      return _buildLoadingState();
+    }
+
+    if (_error != null) {
+      return _buildErrorState();
+    }
+
+    if (_posts.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(
+              Icons.forum_rounded,
+              color: violet,
+              size: 20,
+            ),
+            SizedBox(width: 8),
+            Text(
+              'Community conversation',
+              style: TextStyle(
+                color: ink,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'Share experiences, ask questions, and support other parents.',
+          style: TextStyle(
+            color: inkSoft,
+            fontSize: 13,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 16),
+        ..._posts.map(
+          (post) => _PostCard(
+            post: post,
+            onDelete: () {
+              _deletePost(_postId(post));
+            },
+            onReport: () {
+              _reportPost(_postId(post));
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ==========================================================
+  // ABOUT TAB
+  // ==========================================================
+
+  Widget _buildAboutTab() {
+    return Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+      children: [
+        _buildInfoSection(
+          icon: Icons.info_outline_rounded,
+          title: 'About this community',
+          child: Text(
+            widget.description,
+            style: const TextStyle(
+              color: inkSoft,
+              fontSize: 14,
+              height: 1.6,
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        _buildInfoSection(
+          icon: Icons.people_outline_rounded,
+          title: 'Community size',
+          child: Text(
+            '${widget.memberCount} members',
+            style: const TextStyle(
+              color: inkSoft,
+              fontSize: 14,
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        _buildInfoSection(
+          icon: Icons.shield_outlined,
+          title: 'Community guidelines',
+          child: const Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              _GuidelineRow(
+                icon:
+                    Icons.favorite_border_rounded,
+                text:
+                    'Be kind and supportive to other parents.',
+              ),
+              SizedBox(height: 10),
+              _GuidelineRow(
+                icon:
+                    Icons.verified_user_outlined,
+                text:
+                    'Avoid sharing unsafe or harmful medical advice.',
+              ),
+              SizedBox(height: 10),
+              _GuidelineRow(
+                icon:
+                    Icons.lock_outline_rounded,
+                text:
+                    'Respect the privacy of other community members.',
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoSection({
+    required IconData icon,
+    required String title,
+    required Widget child,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(22),
+        border: Border.all(
+          color: line,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: violetPale,
+                  borderRadius:
+                      BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  icon,
+                  color: violet,
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: ink,
+                  fontSize: 16,
+                  fontWeight:
+                      FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
+  }
+
+  // ==========================================================
+  // MEMBERS TAB
+  // ==========================================================
+
+  Widget _buildMembersTab() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(22),
+        border: Border.all(
+          color: line,
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 62,
+            height: 62,
+            decoration: BoxDecoration(
+              color: violetPale,
+              borderRadius:
+                  BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.people_alt_rounded,
+              color: violet,
+              size: 32,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '${widget.memberCount} community members',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: ink,
+              fontSize: 18,
+              fontWeight:
+                  FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Member profiles will be available here as the community member directory is connected.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: inkSoft,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================================
+  // LOADING
+  // ==========================================================
+
+  Widget _buildLoadingState() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        vertical: 70,
+      ),
+      child: const Column(
+        children: [
+          SizedBox(
+            width: 30,
+            height: 30,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: violet,
+            ),
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Loading community posts...',
+            style: TextStyle(
+              color: inkSoft,
+              fontWeight:
+                  FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================================
+  // EMPTY
+  // ==========================================================
+
+  Widget _buildEmptyState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(30),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(24),
+        border: Border.all(
+          color: line,
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: violetPale,
+              borderRadius:
+                  BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.forum_outlined,
+              color: violet,
+              size: 32,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'No posts yet',
+            style: TextStyle(
+              color: ink,
+              fontSize: 18,
+              fontWeight:
+                  FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 7),
+          const Text(
+            'Be the first parent to start a conversation.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: inkSoft,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 18),
+          FilledButton.icon(
+            onPressed: _createPost,
+            style: FilledButton.styleFrom(
+              backgroundColor: violet,
+              foregroundColor:
+                  Colors.white,
+              shape:
+                  RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(14),
+              ),
+            ),
+            icon: const Icon(
+              Icons.add_rounded,
+            ),
+            label: const Text(
+              'Create the first post',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================================
+  // ERROR
+  // ==========================================================
+
+  Widget _buildErrorState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(24),
+        border: Border.all(
+          color: line,
+        ),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.cloud_off_rounded,
+            color: inkSoft,
+            size: 42,
+          ),
+          const SizedBox(height: 14),
+          Text(
+            _error ?? 'Something went wrong.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: ink,
+              fontWeight:
+                  FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: _loadPosts,
+            style:
+                OutlinedButton.styleFrom(
+              foregroundColor: violet,
+              side: const BorderSide(
+                color: violet,
+              ),
+              shape:
+                  RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(14),
+              ),
+            ),
+            icon: const Icon(
+              Icons.refresh_rounded,
+            ),
+            label: const Text('Retry'),
+          ),
+        ],
       ),
     );
   }
@@ -693,155 +1461,335 @@ class _CommunityFeedScreenState
 // ============================================================
 
 class _PostCard extends StatelessWidget {
-  final int postId;
-  final bool isOwner;
-  final String content;
-  final String date;
+  final Map<String, dynamic> post;
   final VoidCallback onDelete;
   final VoidCallback onReport;
 
   const _PostCard({
-    required this.postId,
-    required this.isOwner,
-    required this.content,
-    required this.date,
+    required this.post,
     required this.onDelete,
     required this.onReport,
   });
 
+  static const Color violet =
+      Color(0xFF6C5CE7);
+  static const Color violetPale =
+      Color(0xFFEFECFC);
+  static const Color ink =
+      Color(0xFF241F35);
+  static const Color inkSoft =
+      Color(0xFF6B667F);
+  static const Color line =
+      Color(0x1A241F35);
+
+  int _postId() {
+    final value =
+        post['id'] ?? post['post_id'];
+
+    if (value is int) {
+      return value;
+    }
+
+    return int.tryParse(
+          value?.toString() ?? '',
+        ) ??
+        0;
+  }
+
+  String _content() {
+    return post['content']
+            ?.toString()
+            .trim() ??
+        '';
+  }
+
+  String _author() {
+    final value =
+        post['author_name'] ??
+        post['user_name'] ??
+        post['username'] ??
+        post['author'];
+
+    final text =
+        value?.toString().trim() ?? '';
+
+    return text.isEmpty
+        ? 'Parent'
+        : text;
+  }
+
+  String _date() {
+    final value =
+        post['created_at'] ??
+        post['createdAt'] ??
+        post['date'];
+
+    if (value == null) {
+      return '';
+    }
+
+    try {
+      final date =
+          DateTime.parse(
+        value.toString(),
+      ).toLocal();
+
+      final now = DateTime.now();
+      final difference =
+          now.difference(date);
+
+      if (difference.inMinutes < 1) {
+        return 'Just now';
+      }
+
+      if (difference.inMinutes < 60) {
+        return '${difference.inMinutes}m ago';
+      }
+
+      if (difference.inHours < 24) {
+        return '${difference.inHours}h ago';
+      }
+
+      if (difference.inDays < 7) {
+        return '${difference.inDays}d ago';
+      }
+
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (_) {
+      return value.toString();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(
-        bottom: 16,
+    return Container(
+      margin:
+          const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(22),
+        border: Border.all(
+          color: line,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 14,
+            offset: Offset(0, 5),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const CircleAvatar(
-                  child: Icon(Icons.person),
-                ),
-
-                const SizedBox(width: 10),
-
-                const Text(
-                  'Parent',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient:
+                      const LinearGradient(
+                    colors: [
+                      Color(0xFFEDE9FF),
+                      Color(0xFFFCE6EA),
+                    ],
                   ),
+                  borderRadius:
+                      BorderRadius.circular(14),
                 ),
-
-                const Spacer(),
-
-                Text(
-                  date,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
+                child: const Icon(
+                  Icons.person_rounded,
+                  color: violet,
+                  size: 23,
                 ),
-
-                // ==================================================
-                // THREE-DOT MENU
-                // ==================================================
-
-                PopupMenuButton<String>(
-                  icon: const Icon(
-                    Icons.more_vert,
-                  ),
-                  onSelected: (value) {
-                    if (value == 'delete') {
-                      onDelete();
-                    }
-
-                    if (value == 'report') {
-                      onReport();
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    if (isOwner)
-                      const PopupMenuItem<String>(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.delete_outline,
-                            ),
-                            SizedBox(width: 10),
-                            Text('Delete'),
-                          ],
-                        ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _author(),
+                      style:
+                          const TextStyle(
+                        color: ink,
+                        fontSize: 14,
+                        fontWeight:
+                            FontWeight.w800,
                       ),
-
-                    if (!isOwner)
-                      const PopupMenuItem<String>(
-                        value: 'report',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.flag_outlined,
-                            ),
-                            SizedBox(width: 10),
-                            Text('Report'),
-                          ],
-                        ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _date(),
+                      style:
+                          const TextStyle(
+                        color: inkSoft,
+                        fontSize: 12,
                       ),
+                    ),
                   ],
                 ),
-              ],
-            ),
-
-            const SizedBox(height: 14),
-
-            Text(
-              content,
-              style: const TextStyle(
-                fontSize: 16,
               ),
+              PopupMenuButton<String>(
+                icon: const Icon(
+                  Icons.more_horiz_rounded,
+                  color: inkSoft,
+                ),
+                shape:
+                    RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(14),
+                ),
+                onSelected: (value) {
+                  if (value == 'delete') {
+                    onDelete();
+                  } else if (value ==
+                      'report') {
+                    onReport();
+                  }
+                },
+                itemBuilder:
+                    (context) => [
+                  const PopupMenuItem(
+                    value: 'report',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.flag_outlined,
+                          size: 19,
+                        ),
+                        SizedBox(width: 10),
+                        Text('Report post'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons
+                              .delete_outline_rounded,
+                          size: 19,
+                        ),
+                        SizedBox(width: 10),
+                        Text('Delete post'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _content(),
+            style: const TextStyle(
+              color: ink,
+              fontSize: 14.5,
+              height: 1.55,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            height: 1,
+            color: line,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: violetPale,
+                  borderRadius:
+                      BorderRadius.circular(20),
+                ),
+                child: const Row(
+                  mainAxisSize:
+                      MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons
+                          .favorite_border_rounded,
+                      size: 15,
+                      color: violet,
+                    ),
+                    SizedBox(width: 5),
+                    Text(
+                      'Support',
+                      style: TextStyle(
+                        color: violet,
+                        fontSize: 11.5,
+                        fontWeight:
+                            FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '#${_postId()}',
+                style: const TextStyle(
+                  color: inkSoft,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
 // ============================================================
-// FEED ERROR
+// GUIDELINE ROW
 // ============================================================
 
-class _FeedError extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
+class _GuidelineRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
 
-  const _FeedError({
-    required this.message,
-    required this.onRetry,
+  const _GuidelineRow({
+    required this.icon,
+    required this.text,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        children: [
-          Text(
-            message,
-            textAlign: TextAlign.center,
+    return Row(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+      children: [
+        const SizedBox(width: 1),
+        Icon(
+          icon,
+          color: Color(0xFF6C5CE7),
+          size: 19,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Color(0xFF6B667F),
+              fontSize: 13.5,
+              height: 1.45,
+            ),
           ),
-
-          const SizedBox(height: 12),
-
-          ElevatedButton(
-            onPressed: onRetry,
-            child: const Text('Retry'),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

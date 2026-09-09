@@ -6,8 +6,6 @@ from ollama import ResponseError
 
 from app.config.settings import settings
 from app.ai.client import client
-from app.database.database import SessionLocal
-from app.database.models import CommunityModerationRule
 
 
 class ModerationResult(BaseModel):
@@ -64,6 +62,7 @@ Return ONLY the requested structured result.
 
 LANGUAGE:
 Return the primary language using a short language code when possible.
+
 Examples:
 en = English
 hi = Hindi
@@ -79,6 +78,7 @@ te = Telugu
 kn = Kannada
 
 For mixed-language content, return the primary language.
+
 If language cannot be determined, return null.
 
 If allowed:
@@ -112,40 +112,60 @@ Message to review:
 
 def normalize_text(text: str) -> str:
     """
-    Normalize text before deterministic moderation checks.
+    Normalize text before moderation.
 
-    This helps detect simple variations involving:
+    Handles:
+    - Unicode normalization
     - capitalization
-    - Unicode representation
-    - repeated whitespace
     - punctuation
-    - repeated characters
+    - repeated whitespace
     """
 
-    text = unicodedata.normalize("NFKC", text)
+    text = unicodedata.normalize(
+        "NFKC",
+        text,
+    )
 
     text = text.lower()
 
-    # Replace punctuation/symbols with spaces.
-    text = re.sub(r"[^\w\s]", " ", text, flags=re.UNICODE)
+    text = re.sub(
+        r"[^\w\s]",
+        " ",
+        text,
+        flags=re.UNICODE,
+    )
 
-    # Collapse repeated whitespace.
-    text = re.sub(r"\s+", " ", text)
+    text = re.sub(
+        r"\s+",
+        " ",
+        text,
+    )
 
     return text.strip()
 
 
-def _normalize_rule_pattern(pattern: str) -> str:
-    return normalize_text(pattern)
-
-
-def check_database_rules(content: str) -> ModerationResult | None:
+def check_database_rules(
+    content: str,
+) -> ModerationResult | None:
     """
-    Check high-confidence moderation rules stored in MySQL.
+    Database moderation rules are intentionally disabled
+    for the current MVP.
+
+    CommunityModerationRule is currently used by the
+    Community Rules feature and contains community-rule
+    fields such as:
+
+        title
+        description
+        sort_order
+
+    It is therefore not safe to treat that model as a
+    content-blocking rule model.
+
+    AI moderation is used as the moderation layer for now.
 
     Returns:
-        ModerationResult when a rule matches.
-        None when no deterministic rule matches.
+        None so moderation proceeds to the AI moderator.
     """
 
     normalized_content = normalize_text(content)
@@ -153,87 +173,58 @@ def check_database_rules(content: str) -> ModerationResult | None:
     if not normalized_content:
         return None
 
-    db = SessionLocal()
-
-    try:
-        rules = (
-            db.query(CommunityModerationRule)
-            .filter(CommunityModerationRule.active.is_(True))
-            .all()
-        )
-
-        for rule in rules:
-            pattern = _normalize_rule_pattern(rule.pattern)
-
-            if not pattern:
-                continue
-
-            matched = False
-
-            if rule.rule_type == "exact":
-                matched = normalized_content == pattern
-
-            elif rule.rule_type == "phrase":
-                matched = pattern in normalized_content
-
-            elif rule.rule_type == "keyword_combination":
-                keywords = pattern.split()
-
-                matched = all(
-                    keyword in normalized_content
-                    for keyword in keywords
-                )
-
-            elif rule.rule_type == "regex":
-                try:
-                    matched = re.search(
-                        pattern,
-                        normalized_content,
-                        flags=re.IGNORECASE | re.UNICODE,
-                    ) is not None
-                except re.error:
-                    print(
-                        f"Invalid moderation regex rule: {rule.pattern}"
-                    )
-                    continue
-
-            if matched:
-                return ModerationResult(
-                    allowed=False,
-                    language=rule.language,
-                    category=rule.category,
-                    confidence=1.0,
-                    reason="Matched a community safety rule.",
-                )
-
-        return None
-
-    finally:
-        db.close()
+    return None
 
 
-def moderate_content(content: str) -> ModerationResult:
+def moderate_content(
+    content: str,
+) -> ModerationResult:
     """
-    Two-layer moderation:
+    Moderate community content.
 
-    1. Deterministic MySQL rules
-    2. Multilingual AI moderation
+    Current MVP flow:
+
+    1. Normalize/check the content.
+    2. AI multilingual moderation.
+    3. Return a structured ModerationResult.
     """
 
     # ---------------------------------------------------------
-    # Layer 1: deterministic database rules
+    # Layer 1:
+    # Database rules are currently disabled because the
+    # CommunityModerationRule model is being used for
+    # community guidelines rather than blocked-content rules.
     # ---------------------------------------------------------
 
-    database_result = check_database_rules(content)
+    database_result = check_database_rules(
+        content
+    )
 
     if database_result is not None:
         return database_result
 
     # ---------------------------------------------------------
-    # Layer 2: multilingual AI moderation
+    # Layer 2:
+    # Multilingual AI moderation
     # ---------------------------------------------------------
 
-    prompt = f"{MODERATION_PROMPT}\n\n{content}"
+    normalized_content = normalize_text(
+        content
+    )
+
+    if not normalized_content:
+        return ModerationResult(
+            allowed=False,
+            language=None,
+            category="other",
+            confidence=1.0,
+            reason="Content cannot be empty.",
+        )
+
+    prompt = (
+        f"{MODERATION_PROMPT}\n\n"
+        f"{content}"
+    )
 
     try:
         response = client.chat(
@@ -256,7 +247,10 @@ def moderate_content(content: str) -> ModerationResult:
 
         result.confidence = max(
             0.0,
-            min(1.0, result.confidence),
+            min(
+                1.0,
+                result.confidence,
+            ),
         )
 
         return result
@@ -266,7 +260,10 @@ def moderate_content(content: str) -> ModerationResult:
         ValueError,
         TypeError,
     ) as exc:
-        print(f"Community moderation failed: {exc}")
+
+        print(
+            f"Community moderation failed: {exc}"
+        )
 
         raise RuntimeError(
             "Community moderation service unavailable."
