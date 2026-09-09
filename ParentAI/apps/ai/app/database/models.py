@@ -1,7 +1,7 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, Integer
+from sqlalchemy import DateTime, ForeignKey, String, Text, Integer, Enum
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -9,11 +9,14 @@ from sqlalchemy.orm import (
     relationship,
 )
 from sqlalchemy import (
-    Boolean,
-    DateTime,
-    ForeignKey,
+    Column,
+    Integer,
     String,
     Text,
+    DateTime,
+    ForeignKey,
+    UniqueConstraint,
+    func,
 )
 IST = ZoneInfo("Asia/Kolkata")
 
@@ -325,6 +328,45 @@ class Community(Base):
         nullable=True,
     )
 
+    category: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    icon_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
+    visibility: Mapped[str] = mapped_column(
+        Enum("public", "private", name="community_visibility"),
+        nullable=False,
+        default="public",
+    )
+
+    membership_mode: Mapped[str] = mapped_column(
+        Enum("open", "approval", name="community_membership_mode"),
+        nullable=False,
+        default="open",
+    )
+
+    created_by: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=True,
+    )
+
+    slug: Mapped[str] = mapped_column(
+        String(150),
+        nullable=False,
+        unique=True,
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=ist_now,
+        onupdate=ist_now,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=ist_now,
@@ -359,9 +401,27 @@ class CommunityMember(Base):
         nullable=False,
     )
 
+    role: Mapped[str] = mapped_column(
+        Enum("owner", "moderator", "member", name="community_member_role"),
+        nullable=False,
+        default="member",
+    )
+
+    status: Mapped[str] = mapped_column(
+        Enum("active", "pending", "banned", name="community_member_status"),
+        nullable=False,
+        default="active",
+    )
+
     joined_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=ist_now,
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=ist_now,
+        onupdate=ist_now,
     )
 
     community: Mapped["Community"] = relationship(
@@ -451,6 +511,72 @@ class CommunityComment(Base):
 
     user: Mapped["User"] = relationship()
 
+class CommunityCommentLike(Base):
+    __tablename__ = "community_comment_likes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    comment_id = Column(
+        Integer,
+        ForeignKey("community_comments.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        server_default=func.current_timestamp(),
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "comment_id",
+            "user_id",
+            name="uq_comment_like",
+        ),
+    )
+
+
+class CommunityCommentReport(Base):
+    __tablename__ = "community_comment_reports"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    comment_id = Column(
+        Integer,
+        ForeignKey("community_comments.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    reporter_user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    reason = Column(String(50), nullable=False)
+    details = Column(Text, nullable=True)
+
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        server_default=func.current_timestamp(),
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "comment_id",
+            "reporter_user_id",
+            name="uq_comment_report_user",
+        ),
+    )
+
 
 class ModerationEvent(Base):
     __tablename__ = "moderation_events"
@@ -497,51 +623,48 @@ class ModerationEvent(Base):
     user: Mapped["User"] = relationship()
 
 class CommunityModerationRule(Base):
-    __tablename__ = "community_moderation_rules"
+    __tablename__ = "community_rules"
 
     id: Mapped[int] = mapped_column(
         primary_key=True,
         autoincrement=True,
     )
 
-    pattern: Mapped[str] = mapped_column(
-        String(500),
+    community_id: Mapped[int] = mapped_column(
+        ForeignKey("communities.id"),
         nullable=False,
     )
 
-    language: Mapped[str | None] = mapped_column(
-        String(20),
-        nullable=True,
-    )
-
-    category: Mapped[str] = mapped_column(
-        String(50),
+    title: Mapped[str] = mapped_column(
+        String(150),
         nullable=False,
     )
 
-    rule_type: Mapped[str] = mapped_column(
-        String(30),
+    description: Mapped[str] = mapped_column(
+        Text,
         nullable=False,
-        default="phrase",
     )
 
-    severity: Mapped[str] = mapped_column(
-        String(20),
+    sort_order: Mapped[int] = mapped_column(
+        Integer,
         nullable=False,
-        default="high",
-    )
-
-    active: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=True,
+        default=0,
     )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
-        nullable=False,
         default=ist_now,
     )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=ist_now,
+        onupdate=ist_now,
+    )
+
+    community: Mapped["Community"] = relationship()
+
+
 class CommunityPostReport(Base):
     __tablename__ = "community_post_reports"
 
@@ -581,4 +704,66 @@ class CommunityPostReport(Base):
         DateTime,
         nullable=False,
         default=ist_now,
+    )
+    status = Column(String(20), nullable=False, default="open")
+
+    
+class CommunityCommentLike(Base):
+    __tablename__ = "community_comment_likes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    comment_id = Column(
+        Integer,
+        ForeignKey("community_comments.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        server_default=func.current_timestamp(),
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "comment_id",
+            "user_id",
+            name="uq_comment_like",
+        ),
+    )
+
+
+class CommunityCommentReport(Base):
+    __tablename__ = "community_comment_reports"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    comment_id = Column(
+        Integer,
+        ForeignKey("community_comments.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    reporter_user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    reason = Column(String(50), nullable=False)
+    details = Column(Text, nullable=True)
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        server_default=func.current_timestamp(),
+    )
+    status = Column(String(20), nullable=False, default="open")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "comment_id",
+            "reporter_user_id",
+            name="uq_comment_report_user",
+        ),
     )
