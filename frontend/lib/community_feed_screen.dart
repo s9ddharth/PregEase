@@ -29,17 +29,17 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
   // PREG EASE COLORS
   // ==========================================================
 
-  static const Color violet = Color(0xFF6C5CE7);
-  static const Color violetDeep = Color(0xFF4C3FBF);
-  static const Color violetPale = Color(0xFFEFECFC);
+  static const Color violet = Color(0xFFFF786B);
+  static const Color violetDeep = Color(0xFFE85F58);
+  static const Color violetPale = Color(0xFFFFE9E3);
 
-  static const Color pink = Color(0xFFFADCE0);
-  static const Color pinkInk = Color(0xFFC4577A);
+  static const Color pink = Color(0xFFDDF5E8);
+  static const Color pinkInk = Color(0xFF378B70);
 
   static const Color ink = Color(0xFF241F35);
   static const Color inkSoft = Color(0xFF6B667F);
 
-  static const Color background = Color(0xFFFBF9FC);
+  static const Color background = Color(0xFFFFFAF7);
   static const Color line = Color(0x1A241F35);
 
   // ==========================================================
@@ -306,7 +306,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
         );
       } else {
         _showMessage(
-          'Unable to create your post.',
+          'This message violeted the community guidelines and could not be posted.',
         );
       }
     } catch (e) {
@@ -729,6 +729,7 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
       backgroundColor: background,
       appBar: AppBar(
         backgroundColor: background,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -805,8 +806,8 @@ class _CommunityFeedScreenState extends State<CommunityFeedScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFFF0ECFF),
-            Color(0xFFFFEEF1),
+            Color(0xFFFFEEE7),
+            Color(0xFFFFF0E8),
           ],
         ),
         borderRadius: BorderRadius.circular(28),
@@ -1472,9 +1473,9 @@ class _PostCard extends StatelessWidget {
   });
 
   static const Color violet =
-      Color(0xFF6C5CE7);
+      Color(0xFFFF786B);
   static const Color violetPale =
-      Color(0xFFEFECFC);
+      Color(0xFFFFE9E3);
   static const Color ink =
       Color(0xFF241F35);
   static const Color inkSoft =
@@ -1594,8 +1595,8 @@ class _PostCard extends StatelessWidget {
                   gradient:
                       const LinearGradient(
                     colors: [
-                      Color(0xFFEDE9FF),
-                      Color(0xFFFCE6EA),
+                      Color(0xFFE4F6EC),
+                      Color(0xFFFFE5DE),
                     ],
                   ),
                   borderRadius:
@@ -1775,7 +1776,7 @@ class _GuidelineRow extends StatelessWidget {
         const SizedBox(width: 1),
         Icon(
           icon,
-          color: Color(0xFF6C5CE7),
+          color: Color(0xFFFF786B),
           size: 19,
         ),
         const SizedBox(width: 10),

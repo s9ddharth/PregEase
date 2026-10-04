@@ -16,7 +16,9 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     UniqueConstraint,
+    JSON,
     func,
+    Boolean
 )
 IST = ZoneInfo("Asia/Kolkata")
 
@@ -149,6 +151,10 @@ class PregnancyWeekContent(Base):
         Text,
         nullable=False,
     )
+    nutrition_foods_json: Mapped[list | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
 
     precautions: Mapped[str] = mapped_column(
         Text,
@@ -156,6 +162,21 @@ class PregnancyWeekContent(Base):
     )
 
     mental_wellness: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    sleep_guidance: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    baby_preparation: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    weekly_tips: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
     )
@@ -185,14 +206,13 @@ class PregnancyWeekContent(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=ist_now,
-        onupdate=ist_now ,
+        onupdate=ist_now,
     )
 
     sources: Mapped[list["PregnancyContentSource"]] = relationship(
         back_populates="content",
         cascade="all, delete-orphan",
     )
-
 
 class PregnancyContentSource(Base):
     __tablename__ = "pregnancy_content_sources"
@@ -703,4 +723,125 @@ class CommunityCommentReport(Base):
             "reporter_user_id",
             name="uq_comment_report_user",
         ),
+    )
+class WellnessCheckin(Base):
+    __tablename__ = "wellness_checkins"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    mood_score = Column(Integer, nullable=False)
+    stress_score = Column(Integer, nullable=False)
+    anxiety_score = Column(Integer, nullable=False)
+    sleep_score = Column(Integer, nullable=False)
+    support_score = Column(Integer, nullable=False)
+
+    overall_level = Column(
+        Enum("LOW", "MODERATE", "HIGH"),
+        nullable=False,
+    )
+
+    responses_json = Column(JSON, nullable=True)
+    guidance = Column(Text, nullable=False)
+
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        server_default=func.current_timestamp(),
+    )
+
+    user = relationship("User")
+class BabyPreparationProgress(Base):
+    __tablename__ = "baby_preparation_progress"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    week: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    item_key: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+    )
+
+    is_completed: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
+
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        server_default=func.current_timestamp(),
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
+    )
+
+    user = relationship("User")
+
+
+class PregnancyAppointment(Base):
+    __tablename__ = "pregnancy_appointments"
+
+    id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False, index=True
+    )
+    title: Mapped[str] = mapped_column(
+        String(200), nullable=False
+    )
+    appointment_date: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False
+    )
+    location: Mapped[str | None] = mapped_column(
+        String(255), nullable=True
+    )
+    notes: Mapped[str | None] = mapped_column(
+        Text, nullable=True
+    )
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="scheduled"
+    )
+    reminder_at: Mapped[datetime | None] = mapped_column(
+        DateTime, nullable=True
+    )
+    created_by: Mapped[int] = mapped_column(
+        ForeignKey("users.id"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=ist_now
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=ist_now,
+        onupdate=ist_now
     )

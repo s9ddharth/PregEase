@@ -132,6 +132,70 @@ class AIClient:
         print("✅ Ollama responded")
 
         return reply
+    
+    def generate_nutrition_suggestions(
+        self,
+        pregnancy_week: int,
+        dietary_preference: str | None,
+        custom_dietary_preference: str | None,
+        food_allergies: list[str],
+        safe_foods: list[dict],
+        cuisine: str | None = None,
+        meal_type: str | None = None,
+    ) -> str:
+        import json
+
+        prompt = f"""
+You are a pregnancy nutrition assistant.
+Generate general meal ideas, not medical advice.
+
+Pregnancy week: {pregnancy_week}
+Dietary preference: {dietary_preference or "not specified"}
+Custom dietary preference: {custom_dietary_preference or "none"}
+Food allergies: {json.dumps(food_allergies)}
+Cuisine preference: {cuisine or "any"}
+Meal type: {meal_type or "any"}
+Approved foods: {json.dumps(safe_foods)}
+
+Rules:
+- Use ONLY foods from the approved foods list.
+- Never suggest an excluded food or an ingredient that conflicts
+  with a listed allergy.
+- Do not diagnose conditions or prescribe supplements.
+- Keep suggestions practical and pregnancy-appropriate.
+- Return ONLY valid JSON in this exact format:
+{{
+  "title": "Personalized meal ideas",
+  "suggestions": [
+    {{
+      "name": "Meal name",
+      "description": "Short description",
+      "ingredients": ["ingredient 1", "ingredient 2"]
+    }}
+  ],
+  "safety_note": "General food safety reminder"
+}}
+Return 3 to 5 suggestions.
+"""
+
+        response = client.chat(
+            model=settings.ai_model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "Provide cautious, general pregnancy "
+                        "nutrition ideas. Treat allergy exclusions "
+                        "as strict constraints. Return valid JSON only."
+                    ),
+                },
+                {"role": "user", "content": prompt},
+            ],
+            format="json",
+        )
+
+        return response["message"]["content"]
+
 
 
 # ============================================================

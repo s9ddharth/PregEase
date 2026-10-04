@@ -4,6 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'community_feed_screen.dart';
+import 'preg_ease_theme.dart';
+import 'nutrition_screen.dart';
+import 'baby_preparation_screen.dart';
+import 'wellness_screen.dart';
+import 'activities_screen.dart';
+import 'father_dashboard_screen.dart';
+import 'appointments_screen.dart';
 
 // ============================================================
 // API CONFIGURATION
@@ -72,22 +79,90 @@ class PregEaseApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const sage = Color(0xFF71866B);
+    const deepSage = Color(0xFF405442);
+    const ivory = Color(0xFFFAF7F0);
+    const rose = Color(0xFFD5A5A0);
+    const surface = Color(0xFFFFFDF9);
+    const border = Color(0xFFEAE3D8);
+    const ink = Color(0xFF343A33);
+    const muted = Color(0xFF77796F);
+
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: sage,
+      brightness: Brightness.light,
+    ).copyWith(
+      primary: sage,
+      onPrimary: Colors.white,
+      secondary: rose,
+      onSecondary: deepSage,
+      surface: surface,
+      onSurface: ink,
+      error: const Color(0xFFC94F67),
+      onError: Colors.white,
+    );
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-
       title: 'PregEase',
-
       theme: ThemeData(
         useMaterial3: true,
-
-        scaffoldBackgroundColor:
-            const Color(0xFFF7F8FA),
-
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2196F3),
+        colorScheme: colorScheme,
+        scaffoldBackgroundColor: ivory,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: ivory,
+          foregroundColor: deepSage,
+          elevation: 0,
+          centerTitle: false,
+          surfaceTintColor: Colors.transparent,
+        ),
+        cardTheme: CardThemeData(
+          color: surface,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+            side: const BorderSide(color: border),
+          ),
+          margin: EdgeInsets.zero,
+        ),
+        textTheme: ThemeData.light().textTheme.apply(
+          bodyColor: ink,
+          displayColor: deepSage,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: deepSage,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 14,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: surface,
+          contentPadding: const EdgeInsets.all(16),
+          hintStyle: const TextStyle(color: muted),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: sage, width: 1.5),
+          ),
         ),
       ),
-
       home: const AuthGate(),
     );
   }
@@ -112,59 +187,37 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 145,
+    return Material(
+      color: color,
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFFEAF1F8),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  icon,
-                  color: iconColor,
-                  size: 24,
-                ),
-              ),
-
-              const Spacer(),
-
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
+              Icon(icon, color: iconColor, size: 25),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(title, style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF343A33),
+                    )),
+                    const SizedBox(height: 4),
+                    Text(subtitle, style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF77796F),
+                    )),
+                  ],
                 ),
               ),
-
-              const SizedBox(height: 4),
-
-              Text(
-                subtitle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  height: 1.3,
-                  color: Colors.black54,
-                ),
-              ),
+              const Icon(Icons.chevron_right_rounded,
+                  color: Color(0xFF71866B)),
             ],
           ),
         ),
@@ -174,7 +227,7 @@ class _InfoCard extends StatelessWidget {
 }
 
 
-// ============================================================
+//===========
 // AUTH GATE
 // ============================================================
 //
@@ -203,6 +256,9 @@ class _AuthGateState
   bool _loading = true;
 
   bool _loggedIn = false;
+
+  // Kept in memory only: a fresh app session asks for role again.
+  ParentRole? _selectedRole;
 
 
   @override
@@ -241,7 +297,18 @@ class _AuthGateState
 
 
     if (_loggedIn) {
-      return const AppShell();
+      if (_selectedRole == null) {
+        return RoleSelectionScreen(
+          onRoleSelected: (role) {
+            if (!mounted) return;
+            setState(() {
+              _selectedRole = role;
+            });
+          },
+        );
+      }
+
+      return AppShell(role: _selectedRole!);
     }
 
 
@@ -476,212 +543,606 @@ Future<void> _login() async {
 
   @override
   Widget build(BuildContext context) {
+    const coral = Color(0xFFFF7867);
+    const deepCoral = Color(0xFFE96559);
+    const peach = Color(0xFFFFE9DE);
+    const blush = Color(0xFFFFF5F1);
+    const mint = Color(0xFFE0F3E8);
+    const ink = Color(0xFF303C36);
+    const muted = Color(0xFF7B857F);
+    const line = Color(0xFFECE7E1);
 
     return Scaffold(
-
+      backgroundColor: blush,
       body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 820;
 
-        child: Center(
-
-          child: SingleChildScrollView(
-
-            padding:
-                const EdgeInsets.all(24),
-
-            child: ConstrainedBox(
-
-              constraints:
-                  const BoxConstraints(
-                maxWidth: 430,
+            final brandPanel = Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFFF8B75), Color(0xFFFFB27F)],
+                ),
+                borderRadius: BorderRadius.circular(32),
               ),
-
-              child: Column(
-
-                crossAxisAlignment:
-                    CrossAxisAlignment
-                        .stretch,
-
+              child: Stack(
                 children: [
-
-                  const Icon(
-                    Icons.child_care,
-                    size: 75,
-                    color:
-                        Color(0xFF2196F3),
-                  ),
-
-                  const SizedBox(
-                    height: 20,
-                  ),
-
-                  const Text(
-                    'Welcome to PregEase',
-                    textAlign:
-                        TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(
-                    height: 8,
-                  ),
-
-                  const Text(
-                    'Your parenting support assistant',
-                    textAlign:
-                        TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.grey,
-                    ),
-                  ),
-
-                  const SizedBox(
-                    height: 35,
-                  ),
-
-                  TextField(
-                    controller:
-                        _emailController,
-
-                    keyboardType:
-                        TextInputType
-                            .emailAddress,
-
-                    decoration:
-                        const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(
-                        Icons
-                            .email_outlined,
+                  Positioned(
+                    right: -20,
+                    top: -22,
+                    child: Container(
+                      width: 150,
+                      height: 150,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: .15),
+                        shape: BoxShape.circle,
                       ),
-                      border:
-                          OutlineInputBorder(),
                     ),
                   ),
-
-                  const SizedBox(
-                    height: 16,
-                  ),
-
-                  TextField(
-                    controller:
-                        _passwordController,
-
-                    obscureText:
-                        _obscurePassword,
-
-                    decoration:
-                        InputDecoration(
-                      labelText:
-                          'Password',
-
-                      prefixIcon:
-                          const Icon(
-                        Icons
-                            .lock_outline,
+                  Positioned(
+                    left: -28,
+                    bottom: -42,
+                    child: Container(
+                      width: 125,
+                      height: 125,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFD5A9)
+                            .withValues(alpha: .45),
+                        shape: BoxShape.circle,
                       ),
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 13,
+                          vertical: 9,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .22),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: const Text(
+                          'YOUR SPACE TO BLOOM  ✿',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 25),
+                      const Text(
+                        'A little support\nfor a big journey.',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          height: 1.08,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Feel informed, cared for, and confident — '
+                        'one little step at a time.',
+                        style: TextStyle(
+                          color: Color(0xFFFFF9F3),
+                          fontSize: 14,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 26),
+                      Center(
+                        child: Container(
+                          width: 188,
+                          height: 188,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: .22),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                width: 145,
+                                height: 145,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF0DF),
+                                  borderRadius: BorderRadius.circular(48),
+                                ),
+                              ),
+                              const Icon(
+                                Icons.pregnant_woman_rounded,
+                                size: 108,
+                                color: Color(0xFFB95D50),
+                              ),
+                              Positioned(
+                                top: 18,
+                                right: 15,
+                                child: Container(
+                                  width: 39,
+                                  height: 39,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFFFE7A6),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.star_rounded,
+                                    color: Color(0xFFB7772B),
+                                    size: 25,
+                                  ),
+                                ),
+                              ),
+                              const Positioned(
+                                left: 15,
+                                bottom: 25,
+                                child: Icon(
+                                  Icons.favorite_rounded,
+                                  color: Colors.white,
+                                  size: 29,
+                                ),
+                              ),
+                              const Positioned(
+                                right: 13,
+                                bottom: 34,
+                                child: Icon(
+                                  Icons.local_florist_rounded,
+                                  color: Color(0xFF2D936D),
+                                  size: 27,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.favorite_rounded,
+                              color: Colors.white, size: 15),
+                          SizedBox(width: 7),
+                          Text(
+                            'Here for you, every step of the way',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
 
-                      border:
-                          const OutlineInputBorder(),
-
-                      suffixIcon:
-                          IconButton(
-                        onPressed: () {
-
-                          setState(() {
-
-                            _obscurePassword =
-                                !_obscurePassword;
-                          });
-                        },
-
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons
-                                  .visibility
-                              : Icons
-                                  .visibility_off,
+            final loginCard = Container(
+              padding: EdgeInsets.all(isWide ? 34 : 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: line),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF5E493E)
+                        .withValues(alpha: .07),
+                    blurRadius: 30,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: peach,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: const Icon(
+                      Icons.waving_hand_rounded,
+                      color: deepCoral,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Welcome back!',
+                    style: TextStyle(
+                      color: ink,
+                      fontSize: 27,
+                      height: 1.1,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -.7,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Log in to pick up where your journey left off.',
+                    style: TextStyle(
+                      color: muted,
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 26),
+                  const Text(
+                    'EMAIL ADDRESS',
+                    style: TextStyle(
+                      color: ink,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    decoration: InputDecoration(
+                      hintText: 'you@example.com',
+                      prefixIcon: const Icon(
+                        Icons.mail_outline_rounded,
+                        color: Color(0xFFB67D73),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFFFFAF7),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 17,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(17),
+                        borderSide: const BorderSide(color: line),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(17),
+                        borderSide: const BorderSide(color: line),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(17),
+                        borderSide: const BorderSide(
+                          color: coral,
+                          width: 1.6,
                         ),
                       ),
                     ),
                   ),
-
-                  const SizedBox(
-                    height: 24,
+                  const SizedBox(height: 19),
+                  const Text(
+                    'PASSWORD',
+                    style: TextStyle(
+                      color: ink,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.1,
+                    ),
                   ),
-
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) {
+                      if (!_loading) _login();
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Enter your password',
+                      prefixIcon: const Icon(
+                        Icons.lock_outline_rounded,
+                        color: Color(0xFFB67D73),
+                      ),
+                      suffixIcon: IconButton(
+                        tooltip: _obscurePassword
+                            ? 'Show password'
+                            : 'Hide password',
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: muted,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFFFFAF7),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 17,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(17),
+                        borderSide: const BorderSide(color: line),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(17),
+                        borderSide: const BorderSide(color: line),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(17),
+                        borderSide: const BorderSide(
+                          color: coral,
+                          width: 1.6,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 23),
                   SizedBox(
-                    height: 52,
-
-                    child:
-                        FilledButton(
-                      onPressed:
-                          _loading
-                              ? null
-                              : _login,
-
+                    height: 54,
+                    child: FilledButton(
+                      onPressed: _loading ? null : _login,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: coral,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor:
+                            coral.withValues(alpha: .55),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(17),
+                        ),
+                      ),
                       child: _loading
-
                           ? const SizedBox(
                               width: 22,
                               height: 22,
-                              child:
-                                  CircularProgressIndicator(
-                                strokeWidth:
-                                    2,
-                                color:
-                                    Colors.white,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: Colors.white,
                               ),
                             )
-
-                          : const Text(
-                              'Login',
-                              style:
-                                  TextStyle(
-                                fontSize:
-                                    16,
-                              ),
+                          : const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Log in',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                SizedBox(width: 9),
+                                Icon(Icons.arrow_forward_rounded, size: 19),
+                              ],
                             ),
                     ),
                   ),
-
-                  const SizedBox(
-                    height: 12,
-                  ),
-
-                  TextButton(
-                    onPressed:
-                        _loading
+                  const SizedBox(height: 17),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Flexible(
+                        child: Text(
+                          'New to PregEase?',
+                          style: TextStyle(color: muted, fontSize: 12.5),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _loading
                             ? null
                             : () {
-
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder:
-                                        (_) =>
-                                            RegisterScreen(
-                                      onRegisterSuccess:
-                                          () {
-                                        Navigator.pop(
-                                            context);
+                                    builder: (_) => RegisterScreen(
+                                      onRegisterSuccess: () {
+                                        Navigator.pop(context);
                                       },
                                     ),
                                   ),
                                 );
                               },
-
-                    child: const Text(
-                      "Don't have an account? Create one",
+                        style: TextButton.styleFrom(
+                          foregroundColor: deepCoral,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 8,
+                          ),
+                        ),
+                        child: const Text(
+                          'Create an account',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: mint,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.shield_outlined,
+                          color: Color(0xFF398463),
+                          size: 20,
+                        ),
+                        SizedBox(width: 9),
+                        Expanded(
+                          child: Text(
+                            'Your journey is personal. Your account helps keep your experience connected.',
+                            style: TextStyle(
+                              color: Color(0xFF416D58),
+                              fontSize: 10.5,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ),
-          ),
+            );
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: isWide ? 28 : 18,
+                vertical: isWide ? 28 : 18,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1080),
+                  child: isWide
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              flex: 5,
+                              child: brandPanel,
+                            ),
+                            const SizedBox(width: 28),
+                            Expanded(
+                              flex: 4,
+                              child: loginCard,
+                            ),
+                          ],
+                        )
+                      : Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 3,
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 43,
+                                    height: 43,
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [coral, Color(0xFFFFAC77)],
+                                      ),
+                                      borderRadius:
+                                          BorderRadius.circular(15),
+                                    ),
+                                    child: const Icon(
+                                      Icons.spa_rounded,
+                                      color: Colors.white,
+                                      size: 25,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 11),
+                                  const Text(
+                                    'PregEase',
+                                    style: TextStyle(
+                                      color: ink,
+                                      fontSize: 23,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: -.7,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  const Icon(
+                                    Icons.favorite_rounded,
+                                    color: coral,
+                                    size: 24,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 21),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.fromLTRB(
+                                20, 21, 20, 18,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [Color(0xFFFF8B75), Color(0xFFFFB27F)],
+                                ),
+                                borderRadius: BorderRadius.circular(26),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Your journey,\nwrapped in care.',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 22,
+                                            height: 1.12,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: -.5,
+                                          ),
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Support for you and your growing family.',
+                                          style: TextStyle(
+                                            color: Color(0xFFFFF8F2),
+                                            fontSize: 11.5,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    width: 88,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: .24),
+                                      borderRadius: BorderRadius.circular(28),
+                                    ),
+                                    child: const Icon(
+                                      Icons.pregnant_woman_rounded,
+                                      size: 66,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            loginCard,
+                            const SizedBox(height: 18),
+                            const Text(
+                              'Made with care for you and your growing family ♥',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: muted,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -906,193 +1367,164 @@ class _RegisterScreenState
 
   @override
   Widget build(BuildContext context) {
+    const coral = Color(0xFFE87970);
+    const ink = Color(0xFF343A33);
+    const muted = Color(0xFF77796F);
+
+    InputDecoration fieldDecoration(String label, IconData icon) {
+      return InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: coral),
+        filled: true,
+        fillColor: const Color(0xFFFFFDF9),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFEAE3D8)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFEAE3D8)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: coral, width: 1.5),
+        ),
+      );
+    }
 
     return Scaffold(
-
-      appBar: AppBar(
-        title: const Text(
-          'Create account',
-        ),
-      ),
-
+      backgroundColor: const Color(0xFFFAF7F0),
       body: SafeArea(
-
         child: Center(
-
           child: SingleChildScrollView(
-
-            padding:
-                const EdgeInsets.all(24),
-
+            padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-
-              constraints:
-                  const BoxConstraints(
-                maxWidth: 430,
-              ),
-
+              constraints: const BoxConstraints(maxWidth: 480),
               child: Column(
-
-                crossAxisAlignment:
-                    CrossAxisAlignment
-                        .stretch,
-
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      tooltip: 'Back to login',
+                      onPressed: () => widget.onRegisterSuccess(),
+                      icon: const Icon(Icons.arrow_back_rounded),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFD8C9), Color(0xFFFFF0C9)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          radius: 30,
+                          backgroundColor: Colors.white,
+                          child: Icon(
+                            Icons.favorite_rounded,
+                            color: coral,
+                            size: 30,
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          'Your PregEase journey starts here',
+                          style: TextStyle(
+                            color: ink,
+                            fontSize: 27,
+                            height: 1.15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Create your account for thoughtful support, one step at a time.',
+                          style: TextStyle(color: muted, height: 1.4),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   const Text(
-                    'Create your PregEase account',
+                    'Create account',
                     style: TextStyle(
-                      fontSize: 26,
-                      fontWeight:
-                          FontWeight.bold,
+                      color: ink,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-
-                  const SizedBox(
-                    height: 8,
-                  ),
-
+                  const SizedBox(height: 6),
                   const Text(
-                    'Your conversations will be associated with your account.',
-                    style: TextStyle(
-                      color: Colors.grey,
-                    ),
+                    'A few details to get you started.',
+                    style: TextStyle(color: muted),
                   ),
-
-                  const SizedBox(
-                    height: 30,
-                  ),
-
+                  const SizedBox(height: 20),
                   TextField(
-                    controller:
-                        _nameController,
-
-                    textCapitalization:
-                        TextCapitalization
-                            .words,
-
-                    decoration:
-                        const InputDecoration(
-                      labelText: 'Name',
-                      prefixIcon:
-                          Icon(
-                        Icons
-                            .person_outline,
-                      ),
-                      border:
-                          OutlineInputBorder(),
-                    ),
+                    controller: _nameController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: fieldDecoration('Full name', Icons.person_outline_rounded),
                   ),
-
-                  const SizedBox(
-                    height: 16,
-                  ),
-
+                  const SizedBox(height: 14),
                   TextField(
-                    controller:
-                        _emailController,
-
-                    keyboardType:
-                        TextInputType
-                            .emailAddress,
-
-                    decoration:
-                        const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon:
-                          Icon(
-                        Icons
-                            .email_outlined,
-                      ),
-                      border:
-                          OutlineInputBorder(),
-                    ),
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.email],
+                    decoration: fieldDecoration('Email address', Icons.mail_outline_rounded),
                   ),
-
-                  const SizedBox(
-                    height: 16,
-                  ),
-
+                  const SizedBox(height: 14),
                   TextField(
-                    controller:
-                        _passwordController,
-
-                    obscureText:
-                        _obscurePassword,
-
-                    decoration:
-                        InputDecoration(
-                      labelText:
-                          'Password',
-
-                      prefixIcon:
-                          const Icon(
-                        Icons
-                            .lock_outline,
-                      ),
-
-                      border:
-                          const OutlineInputBorder(),
-
-                      suffixIcon:
-                          IconButton(
-                        onPressed: () {
-
-                          setState(() {
-
-                            _obscurePassword =
-                                !_obscurePassword;
-                          });
-                        },
-
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    autofillHints: const [AutofillHints.newPassword],
+                    decoration: fieldDecoration('Password', Icons.lock_outline_rounded).copyWith(
+                      helperText: 'Use at least 6 characters',
+                      helperStyle: const TextStyle(color: muted),
+                      suffixIcon: IconButton(
+                        tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         icon: Icon(
-                          _obscurePassword
-                              ? Icons
-                                  .visibility
-                              : Icons
-                                  .visibility_off,
+                          _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          color: muted,
                         ),
                       ),
                     ),
                   ),
-
-                  const SizedBox(
-                    height: 24,
-                  ),
-
+                  const SizedBox(height: 22),
                   SizedBox(
-                    height: 52,
-
-                    child:
-                        FilledButton(
-                      onPressed:
-                          _loading
-                              ? null
-                              : _register,
-
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: _loading ? null : _register,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: coral,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: coral.withValues(alpha: 0.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
                       child: _loading
-
                           ? const SizedBox(
-                              width: 22,
                               height: 22,
-                              child:
-                                  CircularProgressIndicator(
-                                strokeWidth:
-                                    2,
-                                color:
-                                    Colors.white,
-                              ),
+                              width: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
-
                           : const Text(
-                              'Create account',
-                              style:
-                                  TextStyle(
-                                fontSize:
-                                    16,
-                              ),
+                              'Create my account',
+                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                             ),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'You’re not alone. We’re glad you’re here.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: muted),
                   ),
                 ],
               ),
@@ -1109,110 +1541,237 @@ class _RegisterScreenState
 // APP SHELL
 // ============================================================
 
-class AppShell
-    extends StatefulWidget {
+enum ParentRole { mother, father }
 
-  const AppShell({super.key});
+class RoleSelectionScreen extends StatelessWidget {
+  final ValueChanged<ParentRole> onRoleSelected;
 
-
-  @override
-  State<AppShell> createState() =>
-      _AppShellState();
-}
-
-
-class _AppShellState
-    extends State<AppShell> {
-
-  int _selectedIndex = 0;
-
-
-  final List<Widget> _screens = const [
-
-    DashboardScreen(),
-
-    ChatHistoryScreen(),
-
-    CommunityScreen(),
-
-    DoctorsScreen(),
-
-    ProfileScreen(),
-  ];
-
+  const RoleSelectionScreen({
+    super.key,
+    required this.onRoleSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
+    const coral = Color(0xFFFF7867);
+    const peach = Color(0xFFFFE9DE);
+    const mint = Color(0xFFE0F3E8);
+    const ink = Color(0xFF303C36);
+    const muted = Color(0xFF7B857F);
+
+    Widget roleCard({
+      required String title,
+      required String subtitle,
+      required IconData icon,
+      required Color background,
+      required Color accent,
+      required ParentRole role,
+    }) {
+      return Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: () => onRoleSelected(role),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFECE7E1)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    color: background,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Icon(icon, color: accent, size: 30),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: ink,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: muted,
+                          fontSize: 13,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: ink),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
-
-      body:
-          _screens[_selectedIndex],
-
-      bottomNavigationBar:
-          NavigationBar(
-
-        selectedIndex:
-            _selectedIndex,
-
-        onDestinationSelected:
-            (index) {
-
-          setState(() {
-
-            _selectedIndex =
-                index;
-          });
-        },
-
-        destinations: const [
-
-          NavigationDestination(
-            icon: Icon(
-              Icons.home_outlined,
+      backgroundColor: const Color(0xFFFFFBF5),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: peach,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(
+                      Icons.favorite_rounded,
+                      color: coral,
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Who is using PregEase?',
+                    style: TextStyle(
+                      color: ink,
+                      fontSize: 28,
+                      height: 1.15,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.7,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Choose your dashboard for this session.',
+                    style: TextStyle(color: muted, fontSize: 15),
+                  ),
+                  const SizedBox(height: 28),
+                  roleCard(
+                    title: 'Mother',
+                    subtitle: 'Your pregnancy, wellness, and baby journey.',
+                    icon: Icons.pregnant_woman_rounded,
+                    background: peach,
+                    accent: coral,
+                    role: ParentRole.mother,
+                  ),
+                  const SizedBox(height: 14),
+                  roleCard(
+                    title: 'Father',
+                    subtitle: 'Ways to support your partner and prepare together.',
+                    icon: Icons.family_restroom_rounded,
+                    background: mint,
+                    accent: const Color(0xFF4D9272),
+                    role: ParentRole.father,
+                  ),
+                ],
+              ),
             ),
-            selectedIcon:
-                Icon(Icons.home),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class AppShell extends StatefulWidget {
+  final ParentRole role;
+
+  const AppShell({
+    super.key,
+    required this.role,
+  });
+
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  late ParentRole _activeRole;
+  int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeRole = widget.role;
+  }
+
+  void _switchProfile() {
+    setState(() {
+      _activeRole = _activeRole == ParentRole.mother
+          ? ParentRole.father
+          : ParentRole.mother;
+      _selectedIndex = 0;
+    });
+  }
+
+  List<Widget> get _screens => [
+        _activeRole == ParentRole.father
+            ? FatherDashboardScreen(onSwitchProfile: _switchProfile)
+            : DashboardScreen(onSwitchProfile: _switchProfile),
+        const ChatHistoryScreen(),
+        const CommunityScreen(),
+        const DoctorsScreen(),
+        const AppointmentsScreen(),
+        const ProfileScreen(),
+      ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _screens[_selectedIndex],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() => _selectedIndex = index);
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
             label: 'Home',
           ),
-
           NavigationDestination(
-            icon: Icon(
-              Icons
-                  .smart_toy_outlined,
-            ),
-            selectedIcon:
-                Icon(Icons.smart_toy),
+            icon: Icon(Icons.smart_toy_outlined),
+            selectedIcon: Icon(Icons.smart_toy),
             label: 'PregEase',
           ),
-
           NavigationDestination(
-            icon: Icon(
-              Icons.people_outline,
-            ),
-            selectedIcon:
-                Icon(Icons.people),
+            icon: Icon(Icons.people_outline),
+            selectedIcon: Icon(Icons.people),
             label: 'Community',
           ),
-
           NavigationDestination(
-            icon: Icon(
-              Icons
-                  .medical_services_outlined,
-            ),
-            selectedIcon:
-                Icon(
-              Icons.medical_services,
-            ),
+            icon: Icon(Icons.medical_services_outlined),
+            selectedIcon: Icon(Icons.medical_services),
             label: 'Doctors',
           ),
-
           NavigationDestination(
-            icon: Icon(
-              Icons.person_outline,
-            ),
-            selectedIcon:
-                Icon(Icons.person),
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month_rounded),
+            label: 'Appointments',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
             label: 'Profile',
           ),
         ],
@@ -1280,1094 +1839,851 @@ class ChatSession {
 // DASHBOARD
 // ============================================================
 
-class DashboardScreen
-    extends StatefulWidget {
+class DashboardScreen extends StatefulWidget {
+  final VoidCallback? onSwitchProfile;
 
-  const DashboardScreen({super.key});
-
+  const DashboardScreen({
+    super.key,
+    this.onSwitchProfile,
+  });
 
   @override
-  State<DashboardScreen> createState() =>
-      _DashboardScreenState();
+  State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-
-class _DashboardScreenState
-    extends State<DashboardScreen> {
-
-  final List<ChatSession>
-      _recentSessions = [];
-
+class _DashboardScreenState extends State<DashboardScreen> {
+  final List<ChatSession> _recentSessions = [];
 
   bool _isLoading = true;
-
   String? _error;
-  //Pregnancy Profile
-  bool _hasPregnancyProfile =false;
-  bool _isPregnancyProfileLoading= true;
 
+  bool _hasPregnancyProfile = false;
+  bool _isPregnancyProfileLoading = true;
   int? _pregnancyWeek;
 
+  // ------------------------------------------------------------
+  // DESIGN COLORS
+  // ------------------------------------------------------------
+
+  static const Color primary = Color(0xFF71866B);
+  static const Color primaryDark = Color(0xFF405442);
+
+  static const Color lavender = Color(0xFFF0F2E8);
+  static const Color lavenderBorder = Color(0xFFDCE4D6);
+
+  static const Color softPink = Color(0xFFF8EAE6);
+  static const Color softPeach = Color(0xFFF8EDE0);
+  static const Color softMint = Color(0xFFEAF1E8);
+  static const Color softBlue = Color(0xFFF0F2E8);
+
+  static const Color textDark = Color(0xFF343A33);
+  static const Color textMuted = Color(0xFF77796F);
 
   @override
   void initState() {
-
     super.initState();
 
     _loadRecentSessions();
     _loadPregnancyProfile();
   }
 
+  // ==========================================================
+  // LOAD RECENT CHAT SESSIONS
+  // ==========================================================
 
-  Future<void>
-      _loadRecentSessions() async {
-
+  Future<void> _loadRecentSessions() async {
     if (mounted) {
-
       setState(() {
-
         _isLoading = true;
-
         _error = null;
       });
     }
 
-
     try {
-
-      final response =
-          await http.get(
-
-        Uri.parse(
-          '$apiBaseUrl/chat/sessions',
-        ),
-
-        headers:
-            await authHeaders(),
+      final response = await http.get(
+        Uri.parse('$apiBaseUrl/chat/sessions'),
+        headers: await authHeaders(),
       );
-
 
       if (!mounted) return;
 
-
-      if (response.statusCode ==
-          401) {
-
+      if (response.statusCode == 401) {
         await clearAuth();
 
         setState(() {
-
           _error =
               'Your session has expired. Please login again.';
-
           _isLoading = false;
         });
 
         return;
       }
 
-
-      if (response.statusCode !=
-          200) {
-
+      if (response.statusCode != 200) {
         setState(() {
-
           _error =
               'Could not load recent conversations '
               '(${response.statusCode}).';
-
           _isLoading = false;
         });
 
         return;
       }
 
-
-      final decoded =
-          jsonDecode(response.body);
-
+      final decoded = jsonDecode(response.body);
 
       final List<dynamic> data =
-          decoded is List
-              ? decoded
-              : [];
+          decoded is List ? decoded : [];
 
-
-      final sessions =
-          <ChatSession>[];
-
+      final sessions = <ChatSession>[];
 
       for (final item in data) {
-
-        if (item
-            is Map<String, dynamic>) {
-
+        if (item is Map<String, dynamic>) {
           sessions.add(
-            ChatSession.fromJson(
-              item,
-            ),
+            ChatSession.fromJson(item),
           );
         }
       }
 
-
       setState(() {
-
         _recentSessions
           ..clear()
-          ..addAll(
-            sessions.take(5),
-          );
+          ..addAll(sessions.take(5));
 
         _isLoading = false;
       });
-
     } catch (e) {
+      debugPrint('Recent sessions error: $e');
 
       if (!mounted) return;
 
-
       setState(() {
-
         _error =
             'Could not connect to the AI server.';
-
         _isLoading = false;
       });
     }
   }
-Future<void> _loadPregnancyProfile() async {
-  try {
-    final response = await http.get(
-      Uri.parse(
-        '$apiBaseUrl/pregnancy/profile',
-      ),
-      headers: await authHeaders(),
-    );
 
-    if (!mounted) return;
+  // ==========================================================
+  // LOAD PREGNANCY PROFILE
+  // ==========================================================
 
-    if (response.statusCode == 200) {
-  final data = jsonDecode(response.body);
+  Future<void> _loadPregnancyProfile() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$apiBaseUrl/pregnancy/profile'),
+        headers: await authHeaders(),
+      );
 
-  if (!mounted) return;
+      if (!mounted) return;
 
-  if (data is Map) {
-    setState(() {
-      _hasPregnancyProfile = true;
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-      _pregnancyWeek =
-          data['current_week'] is int
-              ? data['current_week'] as int
-              : int.tryParse(
-                  data['current_week']?.toString() ?? '',
-                );
+        if (data is Map) {
+          setState(() {
+            _hasPregnancyProfile = true;
 
-      _isPregnancyProfileLoading = false;
-    });
-  } else {
-    setState(() {
-      _hasPregnancyProfile = false;
-      _isPregnancyProfileLoading = false;
-    });
-  }
-  return;
-}
+            _pregnancyWeek =
+                data['current_week'] is int
+                    ? data['current_week'] as int
+                    : int.tryParse(
+                        data['current_week']?.toString() ?? '',
+                      );
 
-    if (response.statusCode == 404) {
-  setState(() {
+            _isPregnancyProfileLoading = false;
+          });
+        } else {
+          setState(() {
+            _hasPregnancyProfile = false;
+            _isPregnancyProfileLoading = false;
+          });
+        }
 
-    _pregnancyWeek = null;
-    _hasPregnancyProfile = false;
-    _isPregnancyProfileLoading = false;
-  });
-  return;
-}
+        return;
+      }
 
-    if (response.statusCode == 401) {
-      await clearAuth();
+      if (response.statusCode == 404) {
+        setState(() {
+          _pregnancyWeek = null;
+          _hasPregnancyProfile = false;
+          _isPregnancyProfileLoading = false;
+        });
+
+        return;
+      }
+
+      if (response.statusCode == 401) {
+        await clearAuth();
+
+        if (!mounted) return;
+
+        setState(() {
+          _isPregnancyProfileLoading = false;
+        });
+
+        return;
+      }
+
+      setState(() {
+        _isPregnancyProfileLoading = false;
+      });
+    } catch (e) {
+      debugPrint(
+        'Pregnancy profile load error: $e',
+      );
 
       if (!mounted) return;
 
       setState(() {
         _isPregnancyProfileLoading = false;
       });
-
-      return;
     }
-
-    setState(() {
-      _isPregnancyProfileLoading = false;
-    });
-  } catch (e) {
-    debugPrint(
-      'Pregnancy profile load error: $e',
-    );
-
-    if (!mounted) return;
-
-    setState(() {
-      _isPregnancyProfileLoading = false;
-    });
   }
-}
+
+  // ==========================================================
+  // NEW CHAT
+  // ==========================================================
 
   void _openNewChat({
     String? prompt,
   }) {
-
     final sessionId =
         'flutter-${DateTime.now().millisecondsSinceEpoch}';
 
-
     Navigator.push(
       context,
-
       MaterialPageRoute(
-        builder: (_) =>
-            ChatScreen(
+        builder: (_) => ChatScreen(
           sessionId: sessionId,
           initialPrompt: prompt,
         ),
       ),
     ).then((_) {
-
       _loadRecentSessions();
     });
   }
 
+  // ==========================================================
+  // EXISTING CHAT
+  // ==========================================================
 
-  void _openSession(
-    ChatSession session,
-  ) {
-
+  void _openSession(ChatSession session) {
     Navigator.push(
       context,
-
       MaterialPageRoute(
-        builder: (_) =>
-            ChatScreen(
+        builder: (_) => ChatScreen(
           sessionId: session.id,
         ),
       ),
     ).then((_) {
-
       _loadRecentSessions();
     });
   }
+
+  // ==========================================================
+  // PREGNANCY INFORMATION
+  // ==========================================================
+
   void _openPregnancyProfile() {
-  if (_pregnancyWeek == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Pregnancy week information is not available yet.',
+    if (_pregnancyWeek == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Pregnancy week information is not available yet.',
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PregnancyWeekScreen(
+          week: _pregnancyWeek!,
+          apiBaseUrl: apiBaseUrl,
+          authHeaders: authHeaders,
         ),
       ),
     );
-    return;
   }
 
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => PregnancyWeekScreen(
-        week: _pregnancyWeek!,
-        apiBaseUrl: apiBaseUrl,
-        authHeaders: authHeaders,
+  // ==========================================================
+  // SETUP PREGNANCY PROFILE
+  // ==========================================================
+
+  void _setupPregnancyProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const PregnancyProfileScreen(),
       ),
-    ),
-  );
-}
+    ).then((_) {
+      _loadPregnancyProfile();
+    });
+  }
 
+  // ==========================================================
+  // SECTION TITLE
+  // ==========================================================
 
-  @override
-  Widget build(BuildContext context) {
-
-    return SafeArea(
-
-      child:
-          RefreshIndicator(
-
-        onRefresh:
-            _loadRecentSessions,
-
-        child:
-            ListView(
-
-          padding:
-              const EdgeInsets.all(
-            20,
-          ),
-
-          children: [
-
-            const SizedBox(
-              height: 10,
-            ),
-
-            Padding(
-  padding: const EdgeInsets.only(
-    left: 4,
-    right: 4,
-    bottom: 4,
-  ),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        'Good to see you 👋',
-        style: TextStyle(
-          fontSize: 30,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.5,
-        ),
-      ),
-      const SizedBox(height: 8),
-      Text(
-        'How can PregEase help you today?',
-        style: TextStyle(
-          color: Colors.grey.shade600,
-          fontSize: 15.5,
-          height: 1.4,
-        ),
-      ),
-    ],
-  ),
-),
-
-const SizedBox(height: 26),
-
-            const SizedBox(
-              height: 24,
-            ),
- // ------------------------------------------------
-// WEEKLY PREGNANCY CARD
-// ------------------------------------------------
-
-if (!_isPregnancyProfileLoading &&
-    _hasPregnancyProfile &&
-    _pregnancyWeek != null)
-  Container(
-    padding: const EdgeInsets.all(24),
-    decoration: BoxDecoration(
-      color: const Color(0xFFF3F0FF),
-      borderRadius: BorderRadius.circular(28),
-      border: Border.all(
-        color: const Color(0xFFE4DEFF),
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.05),
-          blurRadius: 18,
-          offset: const Offset(0, 8),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _sectionTitle(
+    String title, {
+    String? action,
+    VoidCallback? onAction,
+  }) {
+    return Row(
+      mainAxisAlignment:
+          MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: const Icon(
-                Icons.pregnant_woman,
-                color: Color(0xFF2196F3),
-                size: 28,
-              ),
-            ),
-
-            const SizedBox(width: 14),
-
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'YOUR PREGNANCY JOURNEY',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.1,
-                      color: Color(0xFF2196F3),
-                    ),
-                  ),
-                  SizedBox(height: 5),
-                  Text(
-                    'Growing together, one week at a time',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 28),
-
         Text(
-          'Week $_pregnancyWeek',
+          title,
           style: const TextStyle(
-            fontSize: 36,
+            fontSize: 20,
             fontWeight: FontWeight.w800,
-            height: 1,
+            color: textDark,
+            letterSpacing: -0.3,
           ),
         ),
 
-        const SizedBox(height: 10),
-
-        Text(
-          'You are in week $_pregnancyWeek of your pregnancy.',
-          style: const TextStyle(
-            fontSize: 15,
-            height: 1.5,
-            color: Colors.black54,
+        if (action != null)
+          TextButton(
+            onPressed: onAction,
+            child: Text(
+              action,
+              style: const TextStyle(
+                color: primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
-        ),
+      ],
+    );
+  }
 
-        const SizedBox(height: 22),
+  // ==========================================================
+  // QUICK ACTION CARD
+  // ==========================================================
 
-        Container(
-          height: 8,
+  Widget _quickAction({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color background,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: Container(
+          height: 142,
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: FractionallySizedBox(
-            alignment: Alignment.centerLeft,
-            widthFactor: (_pregnancyWeek! / 40)
-                .clamp(0.0, 1.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF2196F3),
-                borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: const Color(0xFFEAE3D8),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color:
+                    const Color(0x0A343A33),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
-            ),
+            ],
           ),
-        ),
-
-        const SizedBox(height: 8),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Week $_pregnancyWeek',
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.black45,
-              ),
-            ),
-            const Text(
-              'Week 40',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.black45,
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 22),
-
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _openPregnancyProfile,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2196F3),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(
-                vertical: 16,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'View Pregnancy Information',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(width: 8),
-                Icon(
-                  Icons.arrow_forward_rounded,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    ),
-  ),
-
-if (!_isPregnancyProfileLoading &&
-    _hasPregnancyProfile &&
-    _pregnancyWeek != null)
-  const SizedBox(
-    height: 24,
-  ),
-
-// ------------------------------------------------
-// AI CARD
-// ------------------------------------------------
-
-Container(
-  padding: const EdgeInsets.all(24),
-  decoration: BoxDecoration(
-    color: const Color(0xFF2196F3),
-    borderRadius: BorderRadius.circular(28),
-    boxShadow: [
-      BoxShadow(
-        color: const Color(0xFF2196F3).withValues(alpha: 0.18),
-        blurRadius: 18,
-        offset: const Offset(0, 8),
-      ),
-    ],
-  ),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Icon(
-              Icons.smart_toy_outlined,
-              color: Color(0xFF2196F3),
-              size: 28,
-            ),
-          ),
-
-          const Spacer(),
-
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 6,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              children: [
-                Icon(
-                  Icons.auto_awesome,
-                  color: Colors.white,
-                  size: 14,
-                ),
-                SizedBox(width: 5),
-                Text(
-                  'PregEase AI',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-
-      const SizedBox(height: 22),
-
-      const Text(
-        'Talk to PregEase',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 24,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.3,
-        ),
-      ),
-
-      const SizedBox(height: 8),
-
-      const Text(
-        'Your personal AI parenting companion is here to help.',
-        style: TextStyle(
-          color: Colors.white70,
-          fontSize: 15,
-          height: 1.5,
-        ),
-      ),
-
-      const SizedBox(height: 22),
-
-      SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: _openNewChat,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: const Color(0xFF2196F3),
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(
-              vertical: 16,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
             children: [
-              Text(
-                'Start a conversation',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: background,
+                  borderRadius:
+                      BorderRadius.circular(15),
+                ),
+                child: Icon(
+                  icon,
+                  color: iconColor,
+                  size: 24,
                 ),
               ),
-              SizedBox(width: 8),
-              Icon(
-                Icons.arrow_forward_rounded,
-                size: 20,
+
+              const Spacer(),
+
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: textDark,
+                ),
+              ),
+
+              const SizedBox(height: 3),
+
+              Text(
+                subtitle,
+                maxLines: 2,
+                overflow:
+                    TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  color: textMuted,
+                  height: 1.25,
+                ),
               ),
             ],
           ),
         ),
       ),
-    ],
-  ),
-),
+    );
+  }
 
-            const SizedBox(
-  height: 24,
-),
+  // ==========================================================
+  // BUILD
+  // ==========================================================
 
-// ------------------------------------------------
-// PREGNANCY PROFILE
-// ------------------------------------------------
+  @override
+  Widget build(BuildContext context) {
+    const ink = Color(0xFF25352F);
+    const muted = Color(0xFF68776F);
+    const canvas = Color(0xFFFFFBF5);
+    const coral = Color(0xFFFF765F);
+    const mint = Color(0xFFDDF4E7);
+    const lilac = Color(0xFFEDE5FF);
+    const pink = Color(0xFFFFE2DE);
+    const blue = Color(0xFFDFF1FF);
 
-if (!_isPregnancyProfileLoading &&
-    !_hasPregnancyProfile)
-  Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
-      children: [
-        const Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: Color(0xFFE6F4FF),
-              child: Icon(
-                Icons.pregnant_woman,
-                color: Color(0xFF2196F3),
+    Widget sectionHeading(String title, String eyebrow, {String? action, VoidCallback? onAction}) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(eyebrow.toUpperCase(), style: const TextStyle(fontSize: 10, letterSpacing: 1.7, fontWeight: FontWeight.w900, color: coral)),
+              const SizedBox(height: 5),
+              Text(title, style: const TextStyle(fontSize: 22, height: 1.12, fontWeight: FontWeight.w800, letterSpacing: -0.6, color: ink)),
+            ],
+          )),
+          if (action != null) TextButton(onPressed: onAction, child: Text(action, style: const TextStyle(color: ink, fontWeight: FontWeight.w800))),
+        ],
+      );
+    }
+
+    Widget featureTile({
+      required String title,
+      required String subtitle,
+      required IconData icon,
+      required Color color,
+      required Color accent,
+      required VoidCallback onTap,
+      String? tag,
+    }) {
+      return Material(
+        color: color,
+        borderRadius: BorderRadius.circular(26),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(26),
+          onTap: onTap,
+          child: SizedBox(
+            height: 174,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(26),
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: -20,
+                    top: -25,
+                    child: Container(
+                      width: 112,
+                      height: 112,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: .42),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 15,
+                    top: 16,
+                    child: Transform.rotate(
+                      angle: -.12,
+                      child: Container(
+                        width: 60,
+                        height: 66,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .82),
+                          borderRadius: BorderRadius.circular(22),
+                          boxShadow: [
+                            BoxShadow(
+                              color: accent.withValues(alpha: .10),
+                              blurRadius: 12,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Icon(icon, color: accent, size: 34),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 75,
+                    top: 23,
+                    child: Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 17,
+                      color: accent.withValues(alpha: .72),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 15, 14, 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (tag != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: .76),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Text(
+                              tag,
+                              style: TextStyle(
+                                color: accent,
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: .6,
+                              ),
+                            ),
+                          )
+                        else
+                          const SizedBox(height: 22),
+                        const Spacer(),
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: ink,
+                            letterSpacing: -.3,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            height: 1.3,
+                            color: muted,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    right: 13,
+                    bottom: 13,
+                    child: Container(
+                      width: 25,
+                      height: 25,
+                      decoration: BoxDecoration(
+                        color: accent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_outward_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-
-            SizedBox(width: 12),
-
-            Expanded(
-              child: Text(
-                'Pregnancy Profile',
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 12),
-
-        const Text(
-          'Personalize your PregEase experience with your pregnancy information.',
-          style: TextStyle(
-            color: Colors.grey,
-            fontSize: 14,
           ),
-        ),
-
-        const SizedBox(height: 16),
-
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _openPregnancyProfile,
-            child: const Text(
-              'Set Up Pregnancy Profile',
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 4),
-
-        SizedBox(
-          width: double.infinity,
-          child: TextButton(
-            onPressed: () {
-              // User can continue without setting up
-              // the pregnancy profile.
-            },
-            child: const Text(
-              'Maybe Later',
-            ),
-          ),
-        ),
-      ],
-    ),
-  ),
-
-if (!_isPregnancyProfileLoading &&
-    !_hasPregnancyProfile)
-  const SizedBox(
-    height: 28,
-  ),
-
-// ------------------------------------------------
-// YOU MAY ALSO WANT TO KNOW
-// ------------------------------------------------
-
-const Text(
-  'You may also want to know',
-  style: TextStyle(
-    fontSize: 21,
-    fontWeight: FontWeight.w800,
-  ),
-),
-
-const SizedBox(height: 14),
-
-SizedBox(
-  height: 150,
-  child: ListView(
-    scrollDirection: Axis.horizontal,
-    children: [
-      _InfoCard(
-        icon: Icons.restaurant_outlined,
-        title: 'Nutrition',
-        subtitle: 'Healthy eating during pregnancy',
-        color: const Color(0xFFFFF1DD),
-        iconColor: const Color(0xFFF39C12),
-        onTap: () {
-          _openNewChat(
-            prompt: 'What should I know about nutrition during pregnancy?',
-          );
-        },
-      ),
-
-      const SizedBox(width: 12),
-
-      _InfoCard(
-        icon: Icons.self_improvement_outlined,
-        title: 'Wellness',
-        subtitle: 'Take care of your body & mind',
-        color: const Color(0xFFE6F4FF),
-        iconColor: const Color(0xFF2196F3),
-        onTap: () {
-          _openNewChat(
-            prompt: 'What are some safe wellness activities during pregnancy?',
-          );
-        },
-      ),
-
-      const SizedBox(width: 12),
-
-      _InfoCard(
-        icon: Icons.directions_walk_outlined,
-        title: 'Activities',
-        subtitle: 'Safe ways to stay active',
-        color: const Color(0xFFE8F7EF),
-        iconColor: const Color(0xFF35A66F),
-        onTap: () {
-          _openNewChat(
-            prompt: 'What activities are safe during pregnancy?',
-          );
-        },
-      ),
-
-      const SizedBox(width: 12),
-
-      _InfoCard(
-        icon: Icons.child_friendly_outlined,
-        title: 'Prepare',
-        subtitle: 'Get ready for your baby',
-        color: const Color(0xFFF3E9FF),
-        iconColor: const Color(0xFF8E63D2),
-        onTap: () {
-          _openNewChat(
-            prompt: 'How can I prepare for my baby?',
-          );
-        },
-      ),
-    ],
-  ),
-),
-
-const SizedBox(height: 28),
-
-// ------------------------------------------------
-// CONTINUE YOUR CONVERSATIONS
-// ------------------------------------------------
-
-Row(
-  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  children: [
-    const Text(
-      'Continue your conversations',
-      style: TextStyle(
-        fontSize: 21,
-        fontWeight: FontWeight.w800,
-      ),
-    ),
-
-    if (_recentSessions.isNotEmpty)
-      TextButton(
-        onPressed: () {
-          // We can connect this to a full conversations screen later.
-        },
-        child: const Text(
-          'See all',
-          style: TextStyle(
-            color: Color(0xFF2196F3),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-  ],
-),
-
-const SizedBox(height: 8),
-
-if (_isLoading)
-  const Center(
-    child: Padding(
-      padding: EdgeInsets.all(20),
-      child: CircularProgressIndicator(),
-    ),
-  )
-else if (_error != null)
-  Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Column(
-      children: [
-        const Icon(
-          Icons.cloud_off_outlined,
-          size: 40,
-          color: Color(0xFF2196F3),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          _error!,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        TextButton.icon(
-          onPressed: _loadRecentSessions,
-          icon: const Icon(Icons.refresh),
-          label: const Text('Retry'),
-        ),
-      ],
-    ),
-  )
-else if (_recentSessions.isEmpty)
-  Container(
-    padding: const EdgeInsets.all(22),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: const Column(
-      children: [
-        Icon(
-          Icons.chat_bubble_outline_rounded,
-          size: 42,
-          color: Color(0xFF2196F3),
-        ),
-        SizedBox(height: 10),
-        Text(
-          'No conversations yet',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          'Start a conversation with PregEase.',
-          style: TextStyle(
-            color: Colors.black54,
-          ),
-        ),
-      ],
-    ),
-  )
-else
-  ..._recentSessions.take(3).map(
-    (session) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: const Color(0xFFEAF1F8),
-          ),
-        ),
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 4,
-          ),
-          leading: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE6F4FF),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.chat_bubble_outline_rounded,
-              color: Color(0xFF2196F3),
-            ),
-          ),
-          title: Text(
-            session.displayTitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          subtitle: const Text(
-            'Continue your conversation',
-            style: TextStyle(
-              color: Colors.black54,
-              fontSize: 12,
-            ),
-          ),
-          trailing: const Icon(
-            Icons.arrow_forward_ios_rounded,
-            size: 15,
-            color: Colors.black45,
-          ),
-          onTap: () => _openSession(session),
         ),
       );
-    },
-  ),
+    }
 
-const SizedBox(height: 18),
-
-// ------------------------------------------------
-// FUN FACTS
-// ------------------------------------------------
-
-Container(
-  padding: const EdgeInsets.all(22),
-  decoration: BoxDecoration(
-    color: const Color(0xFFEAF6FF),
-    borderRadius: BorderRadius.circular(24),
-    border: Border.all(
-      color: const Color(0xFFD6ECFF),
-    ),
-  ),
-  child: Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Icon(
-          Icons.lightbulb_outline_rounded,
-          color: Color(0xFF2196F3),
-          size: 27,
-        ),
-      ),
-
-      const SizedBox(width: 14),
-
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Fun fact',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
+    return Scaffold(
+      backgroundColor: canvas,
+      body: SafeArea(
+        child: RefreshIndicator(
+          color: coral,
+          onRefresh: () async {
+            await Future.wait([_loadRecentSessions(), _loadPregnancyProfile()]);
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 34),
+            children: [
+              // Bright, friendly brand header
+              Row(children: [
+                Container(
+                  width: 47, height: 47,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [coral, Color(0xFFFFA46B)]),
+                    borderRadius: BorderRadius.circular(17),
+                    boxShadow: [BoxShadow(color: coral.withValues(alpha: .24), blurRadius: 15, offset: const Offset(0, 6))],
                   ),
+                  child: const Icon(Icons.spa_rounded, color: Colors.white, size: 27),
                 ),
-                Icon(
-                  Icons.auto_awesome,
-                  size: 18,
-                  color: Color(0xFF2196F3),
+                const SizedBox(width: 12),
+                const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('PregEase', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -.7, color: ink)),
+                  Text('A brighter little journey, together', style: TextStyle(fontSize: 11.5, color: muted)),
+                ])),
+                if (widget.onSwitchProfile != null)
+                  Tooltip(
+                    message: 'Switch to Father',
+                    child: Material(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(15),
+                        onTap: widget.onSwitchProfile,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 11,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: const Color(0xFFF1E8DE),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.swap_horiz_rounded,
+                                  color: coral, size: 19),
+                              SizedBox(width: 4),
+                              Text(
+                                'Father',
+                                style: TextStyle(
+                                  color: ink,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    width: 43,
+                    height: 43,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: const Color(0xFFF1E8DE),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.favorite_rounded,
+                      color: coral,
+                      size: 21,
+                    ),
+                  ),
+              ]),
+              const SizedBox(height: 27),
+              const Text('Hello, lovely ✨', style: TextStyle(fontSize: 29, height: 1.05, fontWeight: FontWeight.w900, letterSpacing: -1.1, color: ink)),
+              const SizedBox(height: 8),
+              const Text('Small steps, big feelings, and a whole lot of love.', style: TextStyle(fontSize: 14, height: 1.45, color: muted)),
+              const SizedBox(height: 22),
+
+              // Main hero: vivid coral panel + editorial image.
+              Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFFFF826A), Color(0xFFFFA66F)]),
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [BoxShadow(color: coral.withValues(alpha: .2), blurRadius: 24, offset: const Offset(0, 10))],
                 ),
-              ],
-            ),
-
-            const SizedBox(height: 8),
-
-            Text(
-              _pregnancyWeek != null &&
-                      _pregnancyWeek! <= 8
-                  ? 'Your baby is growing incredibly quickly during these early weeks! 💙'
-                  : _pregnancyWeek != null &&
-                          _pregnancyWeek! <= 20
-                      ? 'Your baby is developing new abilities every week. What an amazing journey! ✨'
-                      : 'Your baby is continuing to grow and prepare for the journey ahead. 🩵',
-              style: const TextStyle(
-                fontSize: 14,
-                height: 1.5,
-                color: Colors.black87,
+                child: Stack(children: [
+                  Positioned(right: -22, top: -30, child: Container(width: 155, height: 155, decoration: BoxDecoration(color: Colors.white.withValues(alpha: .12), shape: BoxShape.circle))),
+                  Positioned(right: 18, bottom: -52, child: Container(width: 130, height: 130, decoration: BoxDecoration(color: const Color(0xFFFFD4A4).withValues(alpha: .42), shape: BoxShape.circle))),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(22, 23, 18, 20),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Container(padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7), decoration: BoxDecoration(color: Colors.white.withValues(alpha: .22), borderRadius: BorderRadius.circular(30)), child: const Text('YOUR SPACE TO BLOOM  ✿', style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900, letterSpacing: 1))),
+                      const SizedBox(height: 15),
+                      Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          const Text('You’re growing\nsomething amazing.', style: TextStyle(color: Colors.white, fontSize: 25, height: 1.08, fontWeight: FontWeight.w900, letterSpacing: -.8)),
+                          const SizedBox(height: 9),
+                          Text(_hasPregnancyProfile && _pregnancyWeek != null ? 'Week ${_pregnancyWeek!} of your journey' : 'Guidance for every twist and turn', style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 18),
+                          ElevatedButton.icon(
+                            onPressed: _hasPregnancyProfile ? _openPregnancyProfile : _setupPregnancyProfile,
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: const Color(0xFFE86452), elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12), shape: const StadiumBorder()),
+                            icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+                            label: Text(_hasPregnancyProfile ? 'Explore your week' : 'Personalise my journey', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900)),
+                          ),
+                        ])),
+                        const SizedBox(width: 4),
+                        SizedBox(
+                          width: 112, height: 168,
+                          child: Stack(alignment: Alignment.center, children: [
+                            Container(width: 106, height: 142, decoration: BoxDecoration(color: Colors.white.withValues(alpha: .22), borderRadius: const BorderRadius.only(topLeft: Radius.circular(58), topRight: Radius.circular(58), bottomLeft: Radius.circular(35), bottomRight: Radius.circular(35)))),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(52),
+                              child: Image.network(
+                                'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=420&q=85',
+                                width: 98, height: 138, fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Container(width: 98, height: 138, color: const Color(0xFFFFD7BE), child: const Icon(Icons.pregnant_woman_rounded, size: 66, color: Color(0xFFCB624E))),
+                              ),
+                            ),
+                            Positioned(right: 0, top: 15, child: Container(width: 34, height: 34, decoration: const BoxDecoration(color: Color(0xFFFFE7A8), shape: BoxShape.circle), child: const Icon(Icons.star_rounded, color: Color(0xFFB76B23), size: 21))),
+                            const Positioned(left: 0, bottom: 4, child: Text('♥', style: TextStyle(fontSize: 29, color: Colors.white))),
+                          ]),
+                        ),
+                      ]),
+                    ]),
+                  ),
+                ]),
               ),
-            ),
-          ],
-        ),
-      ),
-    ],
-  ),
-),
 
-const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 29),
+              sectionHeading('What do you need today?', 'Your wellbeing, your way'),
+              const SizedBox(height: 14),
+              SizedBox(height: 174, child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Expanded(child: featureTile(title: 'Nutrition', subtitle: 'Nourish you both', icon: Icons.local_dining_rounded, color: const Color(0xFFFFE7C7), accent: const Color(0xFFB96B20), tag: 'EAT WELL', onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => NutritionScreen(apiBaseUrl: apiBaseUrl, authHeaders: authHeaders)));
+                })),
+                const SizedBox(width: 12),
+                Expanded(child: featureTile(title: 'Wellness', subtitle: 'Check in with you', icon: Icons.self_improvement_rounded, color: pink, accent: const Color(0xFFD65B70), tag: 'FEEL GOOD', onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => WellnessScreen(apiBaseUrl: apiBaseUrl, authHeaders: authHeaders)));
+                })),
+              ])),
+              const SizedBox(height: 12),
+              SizedBox(height: 174, child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Expanded(child: featureTile(title: 'Move & rest', subtitle: 'Gentle everyday habits', icon: Icons.directions_walk_rounded, color: mint, accent: const Color(0xFF27845C), onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => ActivitiesScreen(apiBaseUrl: apiBaseUrl, authHeaders: authHeaders)));
+                })),
+                const SizedBox(width: 12),
+                Expanded(child: featureTile(title: 'Baby prep', subtitle: 'Get ready with love', icon: Icons.child_friendly_rounded, color: lilac, accent: const Color(0xFF7558B6), tag: 'NESTING', onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => BabyPreparationScreen(apiBaseUrl: apiBaseUrl, authHeaders: authHeaders)));
+                })),
+              ])),
+
+              const SizedBox(height: 29),
+              // Support CTA with an illustrated sunburst motif
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(color: const Color(0xFF244B42), borderRadius: BorderRadius.circular(26)),
+                child: Stack(children: [
+                  Positioned(right: -5, top: -18, child: Icon(Icons.wb_sunny_rounded, size: 108, color: Colors.white.withValues(alpha: .07))),
+                  Row(children: [
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const Text('You don’t have to\nfigure it all out.', style: TextStyle(color: Colors.white, fontSize: 21, height: 1.12, fontWeight: FontWeight.w900, letterSpacing: -.4)),
+                      const SizedBox(height: 8),
+                      const Text('Questions, worries, or just need a little reassurance?', style: TextStyle(color: Color(0xFFD5E8DD), fontSize: 12.5, height: 1.4)),
+                      const SizedBox(height: 15),
+                      OutlinedButton.icon(
+                        onPressed: () => _openNewChat(),
+                        style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Color(0xFF8BB5A4)), padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11), shape: const StadiumBorder()),
+                        icon: const Icon(Icons.chat_bubble_rounded, size: 16),
+                        label: const Text('Talk to PregEase', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                      ),
+                    ])),
+                    const SizedBox(width: 10),
+                    Container(width: 62, height: 62, decoration: BoxDecoration(color: const Color(0xFF3E7162), borderRadius: BorderRadius.circular(22)), child: const Icon(Icons.favorite_rounded, color: Color(0xFFFFB4A5), size: 32)),
+                  ]),
+                ]),
+              ),
+
+              const SizedBox(height: 29),
+              sectionHeading('Pick up where you left off', 'Your recent chats', action: 'New chat', onAction: () => _openNewChat()),
+              const SizedBox(height: 12),
+              if (_isLoading)
+                const Padding(padding: EdgeInsets.all(22), child: Center(child: CircularProgressIndicator(color: coral, strokeWidth: 2.5)))
+              else if (_error != null)
+                Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: pink, borderRadius: BorderRadius.circular(18)), child: Row(children: [
+                  const Icon(Icons.cloud_off_rounded, color: Color(0xFFD65B70)),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(_error!, style: const TextStyle(color: ink, fontSize: 12))),
+                  TextButton(onPressed: _loadRecentSessions, child: const Text('Retry')),
+                ]))
+              else if (_recentSessions.isEmpty)
+                Container(padding: const EdgeInsets.all(18), decoration: BoxDecoration(color: blue, borderRadius: BorderRadius.circular(20)), child: Row(children: [
+                  Container(width: 48, height: 48, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.forum_rounded, color: Color(0xFF4382AC))),
+                  const SizedBox(width: 12),
+                  const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Your conversations start here', style: TextStyle(fontWeight: FontWeight.w900, color: ink, fontSize: 13)),
+                    SizedBox(height: 4),
+                    Text('Ask anything on your mind. We’re listening.', style: TextStyle(color: muted, fontSize: 11.5)),
+                  ])),
+                  IconButton(onPressed: () => _openNewChat(), icon: const Icon(Icons.add_circle_rounded, color: Color(0xFF4382AC), size: 29)),
+                ]))
+              else
+                ..._recentSessions.map((session) => Container(
+                  margin: const EdgeInsets.only(bottom: 9),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(19), border: Border.all(color: const Color(0xFFF0E8DF))),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    leading: Container(width: 43, height: 43, decoration: BoxDecoration(color: const Color(0xFFE6F5EC), borderRadius: BorderRadius.circular(15)), child: const Icon(Icons.chat_rounded, color: Color(0xFF27845C), size: 20)),
+                    title: Text(session.displayTitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: ink)),
+                    subtitle: const Text('Continue your conversation', style: TextStyle(fontSize: 11.5, color: muted)),
+                    trailing: const Icon(Icons.arrow_forward_rounded, color: coral, size: 20),
+                    onTap: () => _openSession(session),
+                  ),
+                )),
+
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(color: const Color(0xFFFFF0C9), borderRadius: BorderRadius.circular(23)),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Container(width: 42, height: 42, decoration: BoxDecoration(color: Colors.white.withValues(alpha: .8), borderRadius: BorderRadius.circular(14)), child: const Icon(Icons.wb_twilight_rounded, color: Color(0xFFB77A19), size: 23)),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text('A little reminder', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: ink)),
+                    const SizedBox(height: 5),
+                    Text(
+                      _pregnancyWeek != null && _pregnancyWeek! <= 8
+                        ? 'Your baby is growing quickly in these early weeks. Give yourself permission to rest, too.'
+                        : _pregnancyWeek != null && _pregnancyWeek! <= 20
+                          ? 'Every week brings new changes. Take a moment to notice how you’re feeling today.'
+                          : 'You’re doing something wonderful. Small moments of rest and care count, too.',
+                      style: const TextStyle(fontSize: 12.5, height: 1.45, color: Color(0xFF755D31)),
+                    ),
+                  ])),
+                ]),
+              ),
+              const SizedBox(height: 12),
+              const Center(child: Text('Made with care for you and your growing family  ♥', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF9B9D91), fontSize: 10.5, fontWeight: FontWeight.w600))),
+            ],
+          ),
         ),
       ),
     );
   }
+
 }
 // ============================================================
 // PREGNANCY PROFILE SCREEN
@@ -2734,256 +3050,221 @@ class _PregnancyProfileScreenState
 
   @override
   Widget build(BuildContext context) {
-    final isEditing =
-        widget.existingProfile != null;
+    const coral = Color(0xFFE87970);
+    const ink = Color(0xFF343A33);
+    const muted = Color(0xFF77796F);
+    final isEditing = widget.existingProfile != null;
+
+    Widget sectionCard({required Widget child}) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFDF9),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFEAE3D8)),
+        ),
+        child: child,
+      );
+    }
+
+    Widget sectionTitle(IconData icon, String title, String subtitle) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: coral.withValues(alpha: 0.13),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: coral),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: ink, fontSize: 17, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 4),
+                Text(subtitle, style: const TextStyle(color: muted, height: 1.35)),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFAF7F0),
       appBar: AppBar(
-        title: Text(
-          isEditing
-              ? 'Pregnancy Information'
-              : 'Pregnancy Profile',
-        ),
+        title: Text(isEditing ? 'Pregnancy information' : 'Pregnancy profile'),
+        backgroundColor: const Color(0xFFFAF7F0),
+        foregroundColor: ink,
       ),
-
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
-
-            children: [
-
-              const Text(
-                'Personalize your PregEase experience',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              const Text(
-                'You can skip this setup and complete it later from your Profile.',
-                style: TextStyle(
-                  fontSize: 15,
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              // ------------------------------------------------
-              // LMP DATE
-              // ------------------------------------------------
-
-              const Text(
-                'Last Menstrual Period',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              InkWell(
-                onTap: _selectLmpDate,
-
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(
-                      Icons.calendar_month,
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFD8C9), Color(0xFFFFF0C9)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(26),
                     ),
-                    labelText: 'LMP Date',
-                  ),
-
-                  child: Text(
-                    _lmpDate == null
-                        ? 'Select date'
-                        : _formatDate(
-                            _lmpDate!,
-                          ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              // ------------------------------------------------
-              // DIETARY PREFERENCE
-              // ------------------------------------------------
-
-              const Text(
-                'Dietary Preference',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              DropdownButtonFormField<String>(
-                initialValue: _dietaryPreference,
-
-                decoration:
-                    const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText:
-                      'Select preference',
-                ),
-
-                items:
-                    _dietaryOptions.map(
-                  (option) {
-                    return DropdownMenuItem(
-                      value: option,
-                      child: Text(option),
-                    );
-                  },
-                ).toList(),
-
-                onChanged: (value) {
-                  if (!mounted) {
-                    return;
-                  }
-
-                  setState(() {
-                    _dietaryPreference =
-                        value;
-                  });
-                },
-              ),
-
-              // ------------------------------------------------
-              // CUSTOM DIET
-              // ------------------------------------------------
-
-              if (_dietaryPreference ==
-                  'Other') ...[
-                const SizedBox(height: 12),
-
-                TextField(
-                  controller:
-                      _customDietController,
-
-                  decoration:
-                      const InputDecoration(
-                    border:
-                        OutlineInputBorder(),
-                    labelText:
-                        'Custom dietary preference',
-                    hintText:
-                        'Enter your preference',
-                  ),
-                ),
-              ],
-
-              const SizedBox(height: 28),
-
-              // ------------------------------------------------
-              // ALLERGIES
-              // ------------------------------------------------
-
-              const Text(
-                'Food Allergies',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-
-              const SizedBox(height: 4),
-
-              const Text(
-                'Select all that apply.',
-              ),
-
-              const SizedBox(height: 8),
-
-              ..._allergyOptions.map(
-                _buildAllergyOption,
-              ),
-
-              const SizedBox(height: 8),
-
-              TextField(
-                controller:
-                    _otherAllergyController,
-
-                decoration:
-                    const InputDecoration(
-                  border:
-                      OutlineInputBorder(),
-                  labelText:
-                      'Other allergy',
-                  hintText:
-                      'Enter another allergy',
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // ------------------------------------------------
-              // SAVE
-              // ------------------------------------------------
-
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-
-                child: FilledButton(
-                  onPressed:
-                      _loading
-                          ? null
-                          : _saveProfile,
-
-                  child: _loading
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child:
-                              CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          isEditing
-                              ? 'Update Profile'
-                              : 'Save Profile',
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.spa_rounded, color: coral, size: 32),
+                        SizedBox(height: 13),
+                        Text(
+                          'A little more personal',
+                          style: TextStyle(color: ink, fontSize: 25, fontWeight: FontWeight.w800, height: 1.15),
                         ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // ------------------------------------------------
-              // SKIP
-              // ------------------------------------------------
-
-              if (!isEditing)
-                SizedBox(
-                  width: double.infinity,
-
-                  child: TextButton(
-                    onPressed: _loading
-                        ? null
-                        : () {
-                            Navigator.of(
-                              context,
-                            ).pop(false);
-                          },
-
-                    child: const Text(
-                      'Maybe Later',
+                        SizedBox(height: 8),
+                        Text(
+                          'These details help tailor pregnancy guidance and nutrition suggestions. You can update them whenever you need.',
+                          style: TextStyle(color: muted, height: 1.45),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-            ],
+                  const SizedBox(height: 20),
+                  sectionCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        sectionTitle(
+                          Icons.calendar_month_rounded,
+                          'Pregnancy dates',
+                          'Your last menstrual period helps estimate pregnancy progress.',
+                        ),
+                        const SizedBox(height: 18),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: _selectLmpDate,
+                          child: InputDecorator(
+                            decoration: const InputDecoration(
+                              labelText: 'Last menstrual period',
+                              prefixIcon: Icon(Icons.event_rounded),
+                            ),
+                            child: Text(
+                              _lmpDate == null ? 'Choose a date' : _formatDate(_lmpDate!),
+                              style: TextStyle(
+                                color: _lmpDate == null ? muted : ink,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  sectionCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        sectionTitle(
+                          Icons.restaurant_menu_rounded,
+                          'Dietary preferences',
+                          'Help us make food and nutrition suggestions more relevant.',
+                        ),
+                        const SizedBox(height: 18),
+                        DropdownButtonFormField<String>(
+                          initialValue: _dietaryPreference,
+                          decoration: const InputDecoration(
+                            labelText: 'Dietary preference',
+                            prefixIcon: Icon(Icons.restaurant_rounded),
+                          ),
+                          items: _dietaryOptions.map((option) {
+                            return DropdownMenuItem<String>(
+                              value: option,
+                              child: Text(option),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            if (!mounted) return;
+                            setState(() => _dietaryPreference = value);
+                          },
+                        ),
+                        if (_dietaryPreference == 'Other') ...[
+                          const SizedBox(height: 14),
+                          TextField(
+                            controller: _customDietController,
+                            decoration: const InputDecoration(
+                              labelText: 'Your dietary preference',
+                              hintText: 'Tell us what works for you',
+                              prefixIcon: Icon(Icons.edit_note_rounded),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  sectionCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        sectionTitle(
+                          Icons.health_and_safety_outlined,
+                          'Food allergies',
+                          'Select all that apply so suggestions can take them into account.',
+                        ),
+                        const SizedBox(height: 12),
+                        ..._allergyOptions.map(_buildAllergyOption),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _otherAllergyController,
+                          decoration: const InputDecoration(
+                            labelText: 'Other allergy (optional)',
+                            hintText: 'Add anything not listed above',
+                            prefixIcon: Icon(Icons.add_circle_outline_rounded),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    height: 54,
+                    child: FilledButton(
+                      onPressed: _loading ? null : _saveProfile,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: coral,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: _loading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : Text(
+                              isEditing ? 'Save changes' : 'Save my profile',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'You can revisit these details from your profile at any time.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: muted, fontSize: 12, height: 1.4),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -3450,89 +3731,39 @@ class _ChatHistoryScreenState
 
   @override
   Widget build(BuildContext context) {
+    const coral = Color(0xFFE87970);
+    const ink = Color(0xFF343A33);
+    const muted = Color(0xFF77796F);
 
     return Scaffold(
-
-      backgroundColor:
-          const Color(0xFFF7F8FA),
-
+      backgroundColor: const Color(0xFFFAF7F0),
       appBar: AppBar(
-
-        backgroundColor:
-            Colors.white,
-
-        elevation: 0,
-
-        title:
-            const Column(
-
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-
+        backgroundColor: const Color(0xFFFAF7F0),
+        foregroundColor: ink,
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            Text(
-              'PregEase',
-              style:
-                  TextStyle(
-                fontWeight:
-                    FontWeight.bold,
-              ),
-            ),
-
-            Text(
-              'Your conversations',
-              style:
-                  TextStyle(
-                fontSize: 12,
-                color:
-                    Colors.grey,
-              ),
-            ),
+            Text('Your conversations', style: TextStyle(fontWeight: FontWeight.w800)),
+            SizedBox(height: 2),
+            Text('Pick up where you left off', style: TextStyle(fontSize: 12, color: muted)),
           ],
         ),
-
         actions: [
-
           IconButton(
-            onPressed:
-                _loadSessions,
-
-            icon:
-                const Icon(
-              Icons.refresh,
-            ),
+            tooltip: 'Refresh conversations',
+            onPressed: _loadSessions,
+            icon: const Icon(Icons.refresh_rounded),
           ),
         ],
       ),
-
-      floatingActionButton:
-          FloatingActionButton.extended(
-
-        onPressed:
-            _createNewChat,
-
-        backgroundColor:
-            const Color(
-          0xFF2196F3,
-        ),
-
-        foregroundColor:
-            Colors.white,
-
-        icon:
-            const Icon(
-          Icons.add,
-        ),
-
-        label:
-            const Text(
-          'New chat',
-        ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _createNewChat,
+        backgroundColor: coral,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('New chat'),
       ),
-
-      body:
-          _buildHistoryBody(),
+      body: _buildHistoryBody(),
     );
   }
 
@@ -4217,10 +4448,8 @@ class _ChatScreenState
 
           color:
               isUser
-                  ? const Color(
-                      0xFF2196F3,
-                    )
-                  : Colors.white,
+                  ? const Color(0xFFE87970)
+                  : const Color(0xFFFFFDF9),
 
           borderRadius:
               BorderRadius.circular(
@@ -4260,274 +4489,143 @@ class _ChatScreenState
 
   @override
   Widget build(BuildContext context) {
+    const coral = Color(0xFFE87970);
+    const ink = Color(0xFF343A33);
+    const muted = Color(0xFF77796F);
 
     return Scaffold(
-
-      backgroundColor:
-          const Color(
-        0xFFF7F8FA,
-      ),
-
-      appBar:
-          AppBar(
-
-        backgroundColor:
-            Colors.white,
-
-        elevation: 0,
-
-        title:
-            const Text(
-          'PregEase',
-          style:
-              TextStyle(
-            fontWeight:
-                FontWeight.bold,
-          ),
+      backgroundColor: const Color(0xFFFAF7F0),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFAF7F0),
+        foregroundColor: ink,
+        title: const Row(
+          children: [
+            CircleAvatar(
+              radius: 19,
+              backgroundColor: Color(0xFFFFE3D7),
+              child: Icon(Icons.favorite_rounded, color: coral, size: 20),
+            ),
+            SizedBox(width: 11),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('PregEase', style: TextStyle(fontWeight: FontWeight.w800)),
+                SizedBox(height: 2),
+                Text('Here to support you', style: TextStyle(fontSize: 12, color: muted)),
+              ],
+            ),
+          ],
         ),
       ),
-
-      body:
-          Column(
-
+      body: Column(
         children: [
-
           Expanded(
-
-            child:
-                _isLoadingHistory
-
-                    ? const Center(
-                        child:
-                            CircularProgressIndicator(),
+            child: _isLoadingHistory
+                ? const Center(child: CircularProgressIndicator(color: coral))
+                : _messages.isEmpty
+                    ? Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(28),
+                          child: Container(
+                            constraints: const BoxConstraints(maxWidth: 420),
+                            padding: const EdgeInsets.all(26),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFFE3D7), Color(0xFFFFF1CC)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                            child: const Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircleAvatar(
+                                  radius: 34,
+                                  backgroundColor: Colors.white,
+                                  child: Icon(Icons.chat_bubble_rounded, size: 31, color: coral),
+                                ),
+                                SizedBox(height: 18),
+                                Text(
+                                  'What’s on your mind?',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: ink, fontSize: 23, fontWeight: FontWeight.w800),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Ask about pregnancy, preparing for baby, or the little things you’re wondering about. We’ll take it one step at a time.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: muted, height: 1.45),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       )
-
-                    : _messages.isEmpty
-
-                        ? const Center(
-
-                            child:
-                                Padding(
-
-                              padding:
-                                  EdgeInsets.all(
-                                30,
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                        itemCount: _messages.length + (_isLoading ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index >= _messages.length) {
+                            return const Align(
+                              alignment: Alignment.centerLeft,
+                              child: Padding(
+                                padding: EdgeInsets.only(bottom: 12, left: 8),
+                                child: SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: coral),
+                                ),
                               ),
-
-                              child:
-                                  Column(
-
-                                mainAxisSize:
-                                    MainAxisSize.min,
-
-                                children: [
-
-                                  Icon(
-                                    Icons
-                                        .smart_toy,
-                                    size:
-                                        55,
-                                    color:
-                                        Color(
-                                      0xFF2196F3,
-                                    ),
-                                  ),
-
-                                  SizedBox(
-                                    height:
-                                        14,
-                                  ),
-
-                                  Text(
-                                    'How can I help you?',
-                                    style:
-                                        TextStyle(
-                                      fontSize:
-                                          21,
-                                      fontWeight:
-                                          FontWeight.bold,
-                                    ),
-                                  ),
-
-                                  SizedBox(
-                                    height:
-                                        8,
-                                  ),
-
-                                  Text(
-                                    'Ask me anything about parenting, sleep, feeding, behaviour or development.',
-                                    textAlign:
-                                        TextAlign.center,
-                                    style:
-                                        TextStyle(
-                                      color:
-                                          Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-
-                        : ListView.builder(
-
-                            padding:
-                                const EdgeInsets.all(
-                              16,
-                            ),
-
-                            itemCount:
-                                _messages.length +
-                                    (_isLoading
-                                        ? 1
-                                        : 0),
-
-                            itemBuilder:
-                                (
-                              context,
-                              index,
-                            ) {
-
-                              if (index >=
-                                  _messages.length) {
-
-                                return const Align(
-
-                                  alignment:
-                                      Alignment.centerLeft,
-
-                                  child:
-                                      Padding(
-
-                                    padding:
-                                        EdgeInsets.only(
-                                      bottom: 12,
-                                    ),
-
-                                    child:
-                                        CircularProgressIndicator(),
-                                  ),
-                                );
-                              }
-
-
-                              return _buildMessage(
-                                _messages[index],
-                              );
-                            },
-                          ),
+                            );
+                          }
+                          return _buildMessage(_messages[index]);
+                        },
+                      ),
           ),
-
-
-          // ==================================================
-          // MESSAGE INPUT
-          // ==================================================
-
           SafeArea(
-
             top: false,
-
-            child:
-                Container(
-
-              padding:
-                  const EdgeInsets.fromLTRB(
-                12,
-                8,
-                12,
-                12,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFFFDF9),
+                border: Border(top: BorderSide(color: Color(0xFFEAE3D8))),
               ),
-
-              color:
-                  Colors.white,
-
-              child:
-                  Row(
-
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-
                   Expanded(
-
-                    child:
-                        TextField(
-
-                      controller:
-                          _messageController,
-
-                      minLines:
-                          1,
-
-                      maxLines:
-                          4,
-
-                      textInputAction:
-                          TextInputAction
-                              .newline,
-
-                      decoration:
-                          InputDecoration(
-
-                        hintText:
-                            'Ask PregEase...',
-
-                        filled:
-                            true,
-
-                        fillColor:
-                            const Color(
-                          0xFFF7F8FA,
-                        ),
-
-                        border:
-                            OutlineInputBorder(
-
-                          borderRadius:
-                              BorderRadius
-                                  .circular(
-                            24,
-                          ),
-
-                          borderSide:
-                              BorderSide.none,
+                    child: TextField(
+                      controller: _messageController,
+                      minLines: 1,
+                      maxLines: 5,
+                      textCapitalization: TextCapitalization.sentences,
+                      onSubmitted: (_) => _sendMessage(),
+                      decoration: InputDecoration(
+                        hintText: 'Write your message…',
+                        filled: true,
+                        fillColor: const Color(0xFFFAF7F0),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 17, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(22),
+                          borderSide: BorderSide.none,
                         ),
                       ),
-
-                      onSubmitted:
-                          (_) {
-
-                        if (!_isLoading) {
-
-                          _sendMessage();
-                        }
-                      },
                     ),
                   ),
-
-                  const SizedBox(
-                    width: 8,
-                  ),
-
-                  CircleAvatar(
-
-                    backgroundColor:
-                        const Color(
-                      0xFF2196F3,
-                    ),
-
-                    child:
-                        IconButton(
-
-                      onPressed:
-                          _isLoading
-                              ? null
-                              : _sendMessage,
-
-                      icon:
-                          const Icon(
-                        Icons.send,
-                        color:
-                            Colors.white,
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    height: 50,
+                    width: 50,
+                    child: FilledButton(
+                      onPressed: _isLoading ? null : _sendMessage,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: coral,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
                       ),
+                      child: const Icon(Icons.arrow_upward_rounded),
                     ),
                   ),
                 ],
@@ -4722,84 +4820,84 @@ class _CommunityScreenState
 
   @override
   Widget build(BuildContext context) {
+    const coral = Color(0xFFE87970);
+    const ink = Color(0xFF343A33);
+    const muted = Color(0xFF77796F);
+
     return SafeArea(
       child: RefreshIndicator(
         onRefresh: _loadCommunities,
+        color: coral,
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
           children: [
-            const Text(
-              'Community',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+            Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFD8C9), Color(0xFFFFF0C9)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(26),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.diversity_3_rounded, size: 34, color: coral),
+                  SizedBox(height: 14),
+                  Text(
+                    'Find your people',
+                    style: TextStyle(
+                      color: ink,
+                      fontSize: 27,
+                      height: 1.1,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Real conversations, shared experiences, and a little more support along the way.',
+                    style: TextStyle(color: muted, height: 1.4),
+                  ),
+                ],
               ),
             ),
-
+            const SizedBox(height: 22),
+            const Text(
+              'Communities',
+              style: TextStyle(color: ink, fontSize: 21, fontWeight: FontWeight.w800),
+            ),
             const SizedBox(height: 6),
-
             const Text(
-              'Connect with other parents',
-              style: TextStyle(
-                color: Colors.grey,
-              ),
+              'Choose a space that feels right for you.',
+              style: TextStyle(color: muted),
             ),
-
-            const SizedBox(height: 24),
-
+            const SizedBox(height: 18),
             if (_loading)
               const Padding(
-                padding: EdgeInsets.only(top: 40),
-                child: Center(
-                  child: CircularProgressIndicator(),
-                ),
+                padding: EdgeInsets.only(top: 42),
+                child: Center(child: CircularProgressIndicator(color: coral)),
               )
             else if (_error != null)
-              _CommunityError(
-                message: _error!,
-                onRetry: _loadCommunities,
-              )
+              _CommunityError(message: _error!, onRetry: _loadCommunities)
             else if (_communities.isEmpty)
               const Padding(
-                padding: EdgeInsets.only(top: 40),
-                child: Center(
-                  child: Text(
-                    'No communities available.',
-                  ),
-                ),
+                padding: EdgeInsets.only(top: 42),
+                child: Center(child: Text('No communities available yet.')),
               )
             else
-              ..._communities.map(
-                (community) {
-                  return _CommunityCard(
-                    icon: _communityIcon(
-                      community['name'] as String,
-                    ),
-                    title:
-                        community['name'] as String,
-                    description:
-                        community['description']
-                                as String? ??
-                            '',
-                    memberCount:
-                        community['member_count']
-                                as int? ??
-                            0,
-                    joined:
-                        community['joined'] == true,
-
-                    // Tap card -> community feed
-                    onTap: () {
-                      _openCommunity(community);
-                    },
-
-                    // Join / Leave button
-                    onToggle: () {
-                      _toggleCommunity(community);
-                    },
-                  );
-                },
-              ),
+              ..._communities.map((community) {
+                return _CommunityCard(
+                  icon: _communityIcon(community['name'] as String),
+                  title: community['name'] as String,
+                  description: community['description'] as String? ?? '',
+                  memberCount: community['member_count'] as int? ?? 0,
+                  joined: community['joined'] == true,
+                  onTap: () => _openCommunity(community),
+                  onToggle: () => _toggleCommunity(community),
+                );
+              }),
           ],
         ),
       ),
@@ -5044,73 +5142,87 @@ class DoctorsScreen
 
   @override
   Widget build(BuildContext context) {
+    const ink = Color(0xFF343A33);
+    const muted = Color(0xFF77796F);
+    const coral = Color(0xFFE87970);
 
     return SafeArea(
-
-      child:
-          ListView(
-
-        padding:
-            const EdgeInsets.all(
-          20,
-        ),
-
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
         children: [
-
-          const Text(
-            'Doctors',
-
-            style:
-                TextStyle(
-              fontSize: 28,
-              fontWeight:
-                  FontWeight.bold,
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFE4F0DF), Color(0xFFDDF0F5)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(26),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.health_and_safety_rounded, color: Color(0xFF71866B), size: 34),
+                SizedBox(height: 14),
+                Text(
+                  'Care you can trust',
+                  style: TextStyle(color: ink, fontSize: 27, height: 1.1, fontWeight: FontWeight.w800),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Explore professional support for your family’s health and wellbeing.',
+                  style: TextStyle(color: muted, height: 1.4),
+                ),
+              ],
             ),
           ),
-
-          const SizedBox(
-            height: 6,
-          ),
-
+          const SizedBox(height: 24),
           const Text(
-            'Find professional support',
-
-            style:
-                TextStyle(
-              color:
-                  Colors.grey,
+            'Care categories',
+            style: TextStyle(color: ink, fontSize: 21, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'These categories are starting points, not individual provider listings.',
+            style: TextStyle(color: muted),
+          ),
+          const SizedBox(height: 18),
+          const _DoctorCard(
+            name: 'Pediatrician',
+            specialty: 'Child health specialist',
+            icon: Icons.medical_services_rounded,
+          ),
+          const _DoctorCard(
+            name: 'Child Psychologist',
+            specialty: 'Child development & behaviour',
+            icon: Icons.psychology_rounded,
+          ),
+          const _DoctorCard(
+            name: 'Nutritionist',
+            specialty: 'Child nutrition specialist',
+            icon: Icons.restaurant_rounded,
+          ),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF0E9),
+              borderRadius: BorderRadius.circular(18),
             ),
-          ),
-
-          const SizedBox(
-            height: 24,
-          ),
-
-          const _DoctorCard(
-            name:
-                'Pediatrician',
-            specialty:
-                'Child health specialist',
-            icon:
-                Icons.medical_services,
-          ),
-
-          const _DoctorCard(
-            name:
-                'Child Psychologist',
-            specialty:
-                'Child development & behaviour',
-            icon:
-                Icons.psychology,
-          ),
-
-          const _DoctorCard(
-            name:
-                'Nutritionist',
-            specialty:
-                'Child nutrition specialist',
-            icon:
-                Icons.restaurant,
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline_rounded, color: coral),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'For urgent symptoms or emergencies, contact local emergency services or your healthcare provider directly.',
+                    style: TextStyle(color: ink, height: 1.4),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -5180,9 +5292,7 @@ class _DoctorCard
                 Icon(
               icon,
               color:
-                  const Color(
-                0xFF2196F3,
-              ),
+                  const Color(0xFFE87970),
             ),
           ),
 
@@ -5440,176 +5550,181 @@ Navigator.of(context).pushAndRemoveUntil(
 
   @override
   Widget build(BuildContext context) {
+    const coral = Color(0xFFE87970);
+    const ink = Color(0xFF343A33);
+    const muted = Color(0xFF77796F);
+
+    Widget settingsTile({
+      required IconData icon,
+      required Color tint,
+      required String title,
+      required String subtitle,
+      required VoidCallback onTap,
+      bool danger = false,
+    }) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFDF9),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFEAE3D8)),
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: tint.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Icon(icon, color: tint),
+          ),
+          title: Text(
+            title,
+            style: TextStyle(
+              color: danger ? const Color(0xFFC94F67) : ink,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(subtitle, style: const TextStyle(color: muted, height: 1.3)),
+          ),
+          trailing: Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 15,
+            color: danger ? const Color(0xFFC94F67) : muted,
+          ),
+          onTap: onTap,
+        ),
+      );
+    }
 
     return SafeArea(
-
-      child:
-          ListView(
-
-        padding:
-            const EdgeInsets.all(
-          20,
-        ),
-
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
         children: [
-
           const Text(
-            'Profile',
-
-            style:
-                TextStyle(
-              fontSize: 28,
-              fontWeight:
-                  FontWeight.bold,
+            'Your profile',
+            style: TextStyle(
+              color: ink,
+              fontSize: 29,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
             ),
           ),
-
-          const SizedBox(
-            height: 24,
+          const SizedBox(height: 6),
+          const Text(
+            'Make PregEase feel like yours.',
+            style: TextStyle(color: muted, fontSize: 15),
           ),
-
+          const SizedBox(height: 22),
           Container(
-
-            padding:
-                const EdgeInsets.all(
-              20,
-            ),
-
-            decoration:
-                BoxDecoration(
-              color:
-                  Colors.white,
-              borderRadius:
-                  BorderRadius.circular(
-                20,
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFFD7C7), Color(0xFFFFEFCB), Color(0xFFE4F0DF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+              borderRadius: BorderRadius.circular(28),
             ),
-
-            child:
-                Column(
-
+            child: Column(
               children: [
-
-                const CircleAvatar(
-
-                  radius:
-                      42,
-
-                  backgroundColor:
-                      Color(
-                    0xFFE6F4FF,
+                Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    shape: BoxShape.circle,
                   ),
-
-                  child:
-                      Icon(
-                    Icons.person,
-                    size:
-                        45,
-                    color:
-                        Color(
-                      0xFF2196F3,
+                  child: CircleAvatar(
+                    radius: 39,
+                    backgroundColor: const Color(0xFFFFF5EE),
+                    child: Text(
+                      _name.trim().isEmpty ? 'P' : _name.trim()[0].toUpperCase(),
+                      style: const TextStyle(
+                        color: coral,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ),
-
-                const SizedBox(
-                  height: 14,
-                ),
-
+                const SizedBox(height: 14),
                 Text(
                   _name,
-
-                  style:
-                      const TextStyle(
-                    fontSize:
-                        21,
-                    fontWeight:
-                        FontWeight.bold,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: ink,
+                    fontSize: 23,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-
                 if (_email.isNotEmpty) ...[
-
-                  const SizedBox(
-                    height: 5,
-                  ),
-
+                  const SizedBox(height: 5),
                   Text(
                     _email,
-
-                    style:
-                        const TextStyle(
-                      color:
-                          Colors.grey,
-                    ),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: muted),
                   ),
                 ],
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.75),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.favorite_rounded, color: coral, size: 16),
+                      SizedBox(width: 7),
+                      Text(
+                        'Your support space',
+                        style: TextStyle(color: ink, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-
-const SizedBox(
-  height: 20,
-),
-
-// ==========================================================
-// PREGNANCY INFORMATION
-// ==========================================================
-
-Container(
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(18),
-  ),
-  child: ListTile(
-    leading: const Icon(
-      Icons.pregnant_woman,
-      color: Color(0xFF2196F3),
-    ),
-    title: const Text(
-      'Pregnancy Information',
-      style: TextStyle(
-        fontWeight: FontWeight.w600,
-      ),
-    ),
-    subtitle: const Text(
-      'Manage pregnancy, diet and allergy information',
-    ),
-    trailing: const Icon(
-      Icons.chevron_right,
-    ),
-    onTap: _openPregnancyProfile,
-  ),
-),
-
-const SizedBox(
-  height: 12,
-),
-
-// ==========================================================
-// LOGOUT
-// ==========================================================
-
-Container(
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(18),
-  ),
-  child: ListTile(
-    leading: const Icon(
-      Icons.logout,
-      color: Colors.red,
-    ),
-    title: const Text(
-      'Logout',
-      style: TextStyle(
-        color: Colors.red,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    onTap: _logout,
-  ),
-),
+          const SizedBox(height: 28),
+          const Text(
+            'Personalise your experience',
+            style: TextStyle(color: ink, fontSize: 18, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 14),
+          settingsTile(
+            icon: Icons.pregnant_woman_rounded,
+            tint: const Color(0xFFE87970),
+            title: 'Pregnancy information',
+            subtitle: 'Manage your due-date details, diet and allergies',
+            onTap: _openPregnancyProfile,
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Account',
+            style: TextStyle(color: ink, fontSize: 18, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 14),
+          settingsTile(
+            icon: Icons.logout_rounded,
+            tint: const Color(0xFFC94F67),
+            title: 'Log out',
+            subtitle: 'Sign out from this device',
+            danger: true,
+            onTap: _logout,
+          ),
+          const SizedBox(height: 8),
+          const Center(
+            child: Text(
+              'PregEase · Support for every step',
+              style: TextStyle(color: muted, fontSize: 12),
+            ),
+          ),
         ],
       ),
     );
