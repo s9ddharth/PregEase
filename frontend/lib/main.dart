@@ -10,7 +10,11 @@ import 'baby_preparation_screen.dart';
 import 'wellness_screen.dart';
 import 'activities_screen.dart';
 import 'father_dashboard_screen.dart';
+import 'fun_facts.dart';
+import 'ludo_screen.dart';
+import 'partner_questions.dart';
 import 'appointments_screen.dart';
+import 'photos_screen.dart';
 
 // ============================================================
 // API CONFIGURATION
@@ -1729,7 +1733,7 @@ class _AppShellState extends State<AppShell> {
             : DashboardScreen(onSwitchProfile: _switchProfile),
         const ChatHistoryScreen(),
         const CommunityScreen(),
-        const DoctorsScreen(),
+        const PhotosScreen(),
         const AppointmentsScreen(),
         const ProfileScreen(),
       ];
@@ -1760,9 +1764,9 @@ class _AppShellState extends State<AppShell> {
             label: 'Community',
           ),
           NavigationDestination(
-            icon: Icon(Icons.medical_services_outlined),
-            selectedIcon: Icon(Icons.medical_services),
-            label: 'Doctors',
+            icon: Icon(Icons.photo_library_outlined),
+            selectedIcon: Icon(Icons.photo_library_rounded),
+            label: 'Photos',
           ),
           NavigationDestination(
             icon: Icon(Icons.calendar_month_outlined),
@@ -1774,7 +1778,7 @@ class _AppShellState extends State<AppShell> {
             selectedIcon: Icon(Icons.person),
             label: 'Profile',
           ),
-        ],
+        ]
       ),
     );
   }
@@ -1860,6 +1864,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _hasPregnancyProfile = false;
   bool _isPregnancyProfileLoading = true;
   int? _pregnancyWeek;
+  FunFact? _funFact;
+  PartnerQuestion? _partnerQuestion;
 
   // ------------------------------------------------------------
   // DESIGN COLORS
@@ -1991,6 +1997,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     : int.tryParse(
                         data['current_week']?.toString() ?? '',
                       );
+
+            final week = _pregnancyWeek;
+            _funFact = week == null
+                ? null
+                : getRandomFunFact(
+                    week,
+                    isFather: false,
+                  );
+
+            _partnerQuestion = getRandomPartnerQuestion();
 
             _isPregnancyProfileLoading = false;
           });
@@ -2246,6 +2262,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
     );
+  }
+
+  // ==========================================================
+  // RANDOM PARTNER QUESTION
+  // ==========================================================
+
+  void _askAnotherPartnerQuestion() {
+    setState(() {
+      _partnerQuestion = getRandomPartnerQuestion();
+    });
   }
 
   // ==========================================================
@@ -2568,6 +2594,204 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ]),
               ),
 
+              if (_funFact != null) ...[
+                const SizedBox(height: 18),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(19),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF1E8),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: const Color(0xFFFFD9C7),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .78),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome_rounded,
+                          color: Color(0xFFE86452),
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Fun fact · Week ${_pregnancyWeek ?? ''}',
+                              style: const TextStyle(
+                                color: ink,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 7),
+                            Text(
+                              '${_funFact!.emoji}  ${_funFact!.text}',
+                              style: const TextStyle(
+                                color: muted,
+                                fontSize: 12.5,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              if (_partnerQuestion != null) ...[
+                const SizedBox(height: 18),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFFF4EAFE),
+                        Color(0xFFFFEAF1),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(26),
+                    border: Border.all(
+                      color: const Color(0xFFE8D7F2),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: .82),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(
+                              Icons.forum_rounded,
+                              color: Color(0xFF9A5B8F),
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'ASK YOUR PARTNER',
+                                  style: TextStyle(
+                                    color: Color(0xFF9A5B8F),
+                                    fontSize: 10,
+                                    letterSpacing: 1.5,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                SizedBox(height: 3),
+                                Text(
+                                  'One weird question. One good conversation.',
+                                  style: TextStyle(
+                                    color: ink,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .68),
+                          borderRadius: BorderRadius.circular(19),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: .85),
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              child: Text(
+                                _partnerQuestion!.category.toUpperCase(),
+                                style: const TextStyle(
+                                  color: Color(0xFF9A5B8F),
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: .8,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              _partnerQuestion!.text,
+                              style: const TextStyle(
+                                color: ink,
+                                fontSize: 15,
+                                height: 1.45,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _askAnotherPartnerQuestion,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF9A5B8F),
+                            side: const BorderSide(
+                              color: Color(0xFFCFA9C8),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                            ),
+                            shape: const StadiumBorder(),
+                          ),
+                          icon: const Icon(
+                            Icons.casino_rounded,
+                            size: 18,
+                          ),
+                          label: const Text(
+                            'Ask another',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 29),
               sectionHeading('What do you need today?', 'Your wellbeing, your way'),
               const SizedBox(height: 14),
@@ -2590,6 +2814,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => BabyPreparationScreen(apiBaseUrl: apiBaseUrl, authHeaders: authHeaders)));
                 })),
               ])),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 174,
+                child: featureTile(
+                  title: 'Ludo break',
+                  subtitle: 'A little game together',
+                  icon: Icons.casino_rounded,
+                  color: const Color(0xFFE8E2FF),
+                  accent: const Color(0xFF705EB2),
+                  tag: 'PLAY TOGETHER',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LudoScreen()),
+                    );
+                  },
+                ),
+              ),
 
               const SizedBox(height: 29),
               // Support CTA with an illustrated sunburst motif

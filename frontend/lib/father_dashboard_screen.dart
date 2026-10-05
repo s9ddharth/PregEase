@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'fun_facts.dart';
+import 'partner_surprises.dart';
 
 // Keep this URL aligned with apiBaseUrl in main.dart.
 // For Android Emulator, use http://10.0.2.2:8000 instead.
@@ -31,6 +33,8 @@ class _FatherDashboardScreenState extends State<FatherDashboardScreen> {
   static const Color ink = Color(0xFF39364A);
 
   int _currentWeek = 1;
+  FunFact? _funFact;
+  PartnerSurprise? _partnerSurprise;
   int _checklistWeek = 1;
   bool _loading = true;
   String? _errorMessage;
@@ -45,6 +49,11 @@ class _FatherDashboardScreenState extends State<FatherDashboardScreen> {
   void initState() {
     super.initState();
     _currentWeek = widget.currentWeek.clamp(1, 40).toInt();
+    _funFact = getRandomFunFact(
+      _currentWeek,
+      isFather: true,
+    );
+    _partnerSurprise = getPartnerSurprise(_currentWeek);
     _loadChecklist();
     _loadFatherTip();
   }
@@ -166,6 +175,11 @@ class _FatherDashboardScreenState extends State<FatherDashboardScreen> {
             decoded['checklist_week'],
             _currentWeek,
           );
+          _funFact = getRandomFunFact(
+            _currentWeek,
+            isFather: true,
+          );
+          _partnerSurprise = getPartnerSurprise(_currentWeek);
           _tasks = parsedTasks;
           _loading = false;
         });
@@ -346,6 +360,32 @@ class _FatherDashboardScreenState extends State<FatherDashboardScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
+    );
+  }
+
+
+  Widget _surpriseMeta(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .75),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFFE66D5A)),
+          const SizedBox(width: 5),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Color(0xFF68776F),
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -665,6 +705,185 @@ class _FatherDashboardScreenState extends State<FatherDashboardScreen> {
                   ],
                 ),
               ),
+
+              if (_funFact != null) ...[
+                const SizedBox(height: 18),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(19),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEDE5FF),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: const Color(0xFFDCD1FF),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .8),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome_rounded,
+                          color: Color(0xFF7558B6),
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Fun fact · Week $_currentWeek',
+                              style: const TextStyle(
+                                color: ink,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 7),
+                            Text(
+                              '${_funFact!.emoji}  ${_funFact!.text}',
+                              style: const TextStyle(
+                                color: muted,
+                                fontSize: 12.5,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+
+              if (_partnerSurprise != null) ...[
+                const SizedBox(height: 18),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFFFFE8E2),
+                        Color(0xFFFFF2E8),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(25),
+                    border: Border.all(color: Color(0xFFFFD3C8)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: .85),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(
+                              Icons.card_giftcard_rounded,
+                              color: Color(0xFFE66D5A),
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'SURPRISE YOUR PARTNER',
+                                  style: TextStyle(
+                                    color: Color(0xFFE66D5A),
+                                    fontSize: 10,
+                                    letterSpacing: 1.5,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  'Week $_currentWeek mission',
+                                  style: const TextStyle(
+                                    color: Color(0xFF25352F),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        '${_partnerSurprise!.emoji}  ${_partnerSurprise!.title}',
+                        style: const TextStyle(
+                          color: Color(0xFF25352F),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _partnerSurprise!.description,
+                        style: const TextStyle(
+                          color: Color(0xFF68776F),
+                          fontSize: 12.5,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          _surpriseMeta(Icons.schedule_rounded, _partnerSurprise!.time),
+                          const SizedBox(width: 10),
+                          _surpriseMeta(Icons.payments_outlined, _partnerSurprise!.cost),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .7),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('✨', style: TextStyle(fontSize: 16)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Bonus: ${_partnerSurprise!.bonus}',
+                                style: const TextStyle(
+                                  color: Color(0xFF68776F),
+                                  fontSize: 11.5,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 28),
 
               heading('One step at a time', 'Your support checklist'),
