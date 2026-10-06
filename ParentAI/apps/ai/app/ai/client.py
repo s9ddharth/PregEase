@@ -264,6 +264,136 @@ Return 3 to 5 suggestions.
 
 
 
+    def generate_nutrition_recipe(
+        self,
+        pregnancy_week: int,
+        ingredients: str,
+        dietary_preference: str | None,
+        custom_dietary_preference: str | None,
+        food_allergies: list[str],
+        safe_foods: list[dict],
+    ) -> str:
+        import json
+
+        prompt = f"""
+You are PregEase's pregnancy nutrition recipe assistant.
+
+Create ONE practical Indian dish using the ingredients the user says they have.
+
+Pregnancy week: {pregnancy_week}
+User ingredients: {ingredients}
+Dietary preference: {dietary_preference or "not specified"}
+Custom dietary preference: {custom_dietary_preference or "none"}
+Food allergies: {json.dumps(food_allergies)}
+Approved foods: {json.dumps(safe_foods)}
+
+RULES:
+- The user's saved dietary preference is the STRICT source of truth and
+  ALWAYS has higher priority than the ingredients typed by the user.
+- The user's typed ingredients are NEVER permission to override the saved
+  dietary preference or allergies.
+- Apply the dietary preference BEFORE selecting ingredients or designing the
+  recipe.
+- If a typed ingredient conflicts with the saved dietary preference, NEVER use
+  it. Clearly mention that it was excluded and make the dish from the remaining
+  compatible ingredients where possible.
+- For an Indian Vegetarian preference, treat egg as NON-VEGETARIAN and NEVER
+  use egg.
+- For a Jain dietary preference, NEVER use potato, onion, garlic, ginger, or
+  other root/tuber vegetables. Do not treat these as acceptable basic staples.
+- For Jain users, only use basic staples that are compatible with Jain dietary
+  restrictions.
+- Basic kitchen staples are allowed ONLY when compatible with the saved
+  dietary preference and allergies.
+- If the remaining ingredients cannot make a suitable dish, do NOT violate the
+  preference just to complete a recipe. Explain what compatible ingredient is
+  needed.
+- Basic kitchen staples are allowed only when they are compatible with the
+  user's saved dietary preference and allergies.
+- Do not require another non-staple ingredient the user did not list.
+- Prefer familiar Indian home-style dishes.
+- Follow the user's dietary preference STRICTLY.
+- Treat every listed allergy as a strict exclusion.
+- Never include an allergen, even as an optional garnish.
+- Use common Hindi/Indian food names written in English letters (Hinglish)
+  throughout the dish name, ingredients, recipe steps, benefits, and
+  explanations. Prefer "chana" over "chickpeas", "phool gobhi" over
+  "cauliflower", "palak" over "spinach", "jeera" over "cumin", and similar
+  everyday Indian terms.
+- Do not unnecessarily use English ingredient names when a common Hinglish
+  name exists.
+- Do not diagnose, treat, or promise prevention of a medical condition.
+- Benefits must be general nutritional contributions, not medical claims.
+- Do not recommend raw/undercooked animal products, unpasteurized dairy,
+  alcohol, or clearly unsafe pregnancy food choices.
+- Keep the recipe practical for home cooking.
+- Return ONLY valid JSON.
+
+Return exactly:
+{{
+  "dish_name": "Indian dish name",
+  "description": "One short sentence.",
+  "why_recommended": "Why this dish fits the ingredients and pregnancy context.",
+  "ingredients": ["ingredient 1", "ingredient 2"],
+  "basic_staples": ["salt", "oil"],
+  "recipe_steps": ["Step 1", "Step 2", "Step 3"],
+  "potential_benefits": [
+    "General nutritional contribution 1",
+    "General nutritional contribution 2"
+  ],
+  "cooking_time": "About 30 minutes",
+  "safety_note": "Short general pregnancy food-safety reminder."
+}}
+"""
+        response = client.chat(
+            model=settings.ai_model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a cautious Indian pregnancy nutrition "
+                        "recipe assistant. Saved dietary preferences and "
+                        "allergy exclusions always override user-entered "
+                        "ingredients. For Jain users, never use potato, "
+                        "onion, garlic, ginger, or other root/tuber "
+                        "vegetables. Return valid JSON only."
+                    ),
+                },
+                {"role": "user", "content": prompt},
+            ],
+            format="json",
+        )
+        return response["message"]["content"]
+
+    def classify_mood(self, message: str) -> str:
+        import json
+
+        response = client.chat(
+            model=settings.ai_model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a gentle wellness reflection assistant. "
+                        "Read the user's message and identify the single "
+                        "best-fitting everyday mood word. Then give one "
+                        "short, human explanation based ONLY on what the "
+                        "user actually said. Do not diagnose or give medical "
+                        "advice. Return valid JSON only with exactly these "
+                        "keys: mood and why. mood must be one simple word. "
+                        "why must be one short sentence."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": message,
+                },
+            ],
+            format="json",
+        )
+        return response["message"]["content"]
+
+
 # ============================================================
 # SHARED AI CLIENT INSTANCE
 # ============================================================

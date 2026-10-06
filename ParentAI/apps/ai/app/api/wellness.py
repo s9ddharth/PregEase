@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, Query,HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user_id
+from app.ai.client import ai_client
 from app.database.session import SessionLocal
 from app.schemas.wellness import (
     WellnessCheckinCreate,
@@ -14,6 +16,10 @@ from app.services.wellness_service import (
     get_wellness_history,
     get_wellness_pattern
 )
+
+class WellnessMoodRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=1000)
+
 
 router = APIRouter(
     prefix="/wellness",
@@ -47,6 +53,38 @@ def submit_wellness_checkin(
             status_code=500,
             detail="We couldn't save your wellness check-in right now. Please try again in a moment.",
         )
+
+
+@router.post("/mood")
+def classify_wellness_mood(
+    request: WellnessMoodRequest,
+    user_id: int = Depends(get_current_user_id),
+):
+    try:
+        raw_result = ai_client.classify_mood(request.message)
+
+        import json
+        result = json.loads(raw_result)
+
+        mood = str(result.get("mood", "")).strip()
+        why = str(result.get("why", "")).strip()
+
+        if not mood or not why:
+            raise ValueError("AI returned an incomplete mood result.")
+
+        # Keep the mood itself to one simple word.
+        mood = mood.split()[0].strip(".,!?\"'").lower()
+
+        return {
+            "mood": mood,
+            "why": why,
+        }
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="Could not identify your mood. Please try again.",
+        ) from exc
 
 
 @router.get(

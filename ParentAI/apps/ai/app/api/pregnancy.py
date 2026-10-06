@@ -1,4 +1,5 @@
 import json
+from pydantic import BaseModel, Field
 from fastapi import (
     APIRouter,
     Depends,
@@ -32,6 +33,10 @@ from app.services.baby_preparation_service import (
 )
 from app.api.auth import get_current_user_id
 import logging
+
+
+class NutritionRecipeRequest(BaseModel):
+    ingredients: str = Field(min_length=1, max_length=1000)
 
 router = APIRouter(
     prefix="/pregnancy",
@@ -348,6 +353,30 @@ def get_current_week_father_tip(
     return result
 
 
+
+# ============================================================
+# AI MOOD CLASSIFICATION
+# ============================================================
+
+class MoodRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=1000)
+
+
+@router.post("/wellness/mood")
+def classify_wellness_mood(
+    request: MoodRequest,
+    user_id: int = Depends(get_current_user_id),
+):
+    try:
+        mood = ai_client.classify_mood(request.message)
+        return {"mood": mood}
+    except Exception as exc:
+        logger.exception("Failed to classify wellness mood")
+        raise HTTPException(
+            status_code=502,
+            detail="The mood could not be identified. Please try again.",
+        ) from exc
+
 @router.post(
     "/nutrition/suggestions",
     response_model=NutritionSuggestionsResponse,
@@ -400,4 +429,64 @@ def generate_nutrition_suggestions(
         raise HTTPException(
             status_code=502,
             detail="Nutrition suggestions could not be generated. Please try again.",
+        ) from exc
+
+@router.post("/nutrition/recipe")
+def generate_nutrition_recipe(
+    request: NutritionRecipeRequest,
+    user_id: int = Depends(get_current_user_id),
+):
+    nutrition = pregnancy_service.get_personalized_nutrition(user_id)
+
+    if nutrition is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Pregnancy profile not found.",
+        )
+
+    if not nutrition.get("nutrition_guidance"):
+        raise HTTPException(
+            status_code=404,
+            detail="Nutrition content is unavailable for this pregnancy week.",
+        )
+
+    try:
+        raw_result = ai_client.generate_nutrition_recipe(
+            pregnancy_week=nutrition["current_week"],
+            ingredients=request.ingredients,
+            dietary_preference=nutrition.get("dietary_preference"),
+            custom_dietary_preference=nutrition.get(
+                "custom_dietary_preference"
+            ),
+            food_allergies=nutrition.get("food_allergies", []),
+            safe_foods=nutrition.get("foods", []),
+        )
+
+        result = json.loads(raw_result)
+        logger.info("AI nutrition recipe raw result: %s", result)
+
+        required = (
+            "dish_name",
+            "description",
+            "why_recommended",
+            "ingredients",
+            "basic_staples",
+            "recipe_steps",
+            "potential_benefits",
+            "cooking_time",
+            "safety_note",
+        )
+        if any(key not in result for key in required):
+            raise ValueError("AI recipe response is incomplete.")
+
+        return {
+            "current_week": nutrition["current_week"],
+            **result,
+        }
+
+    except Exception as exc:
+        logger.exception("Failed to generate nutrition recipe")
+        raise HTTPException(
+            status_code=502,
+            detail="The recipe could not be generated. Please try again.",
         ) from exc

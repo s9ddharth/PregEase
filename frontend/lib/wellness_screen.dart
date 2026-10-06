@@ -73,10 +73,61 @@ class _WellnessScreenState extends State<WellnessScreen> {
   Map<String, dynamic>? _result;
   List<dynamic> _history = [];
 
+  final TextEditingController _moodController = TextEditingController();
+  bool _moodLoading = false;
+  String? _detectedMood;
+  String? _moodWhy;
+  String? _moodError;
+
   @override
   void initState() {
     super.initState();
     _loadHistory();
+  }
+
+  @override
+  void dispose() {
+    _moodController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _detectMood() async {
+    final message = _moodController.text.trim();
+    if (message.isEmpty || _moodLoading) return;
+
+    setState(() {
+      _moodLoading = true;
+      _detectedMood = null;
+      _moodWhy = null;
+      _moodError = null;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('${widget.apiBaseUrl}/wellness/mood'),
+        headers: await widget.authHeaders(),
+        body: jsonEncode({'message': message}),
+      );
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception('Unable to identify your mood.');
+      }
+
+      final result = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (!mounted) return;
+      setState(() {
+        _detectedMood = result['mood']?.toString();
+        _moodWhy = result['why']?.toString();
+        _moodLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _moodError = 'Could not identify your mood. Please try again.';
+        _moodLoading = false;
+      });
+    }
   }
 
   Future<void> _loadHistory() async {
@@ -453,6 +504,185 @@ class _WellnessScreenState extends State<WellnessScreen> {
     );
   }
 
+  Widget _buildMoodBox() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFF0EAF0)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4D3B56).withValues(alpha: 0.035),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Text('💭', style: TextStyle(fontSize: 25)),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Tell me how you feel',
+                  style: TextStyle(
+                    color: _ink,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Write a few words about your mood. I will give you one simple word for it.',
+            style: TextStyle(
+              color: _muted,
+              fontSize: 12,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 13),
+          TextField(
+            controller: _moodController,
+            maxLines: 3,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              hintText: 'Example: I feel tired but happy today...',
+              hintStyle: const TextStyle(color: Color(0xFFAAA3B0), fontSize: 12),
+              filled: true,
+              fillColor: const Color(0xFFFAF8FB),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(17),
+                borderSide: const BorderSide(color: Color(0xFFF0EAF0)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(17),
+                borderSide: const BorderSide(color: Color(0xFFF0EAF0)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(17),
+                borderSide: const BorderSide(color: _coral, width: 1.4),
+              ),
+            ),
+          ),
+          const SizedBox(height: 11),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: _coral,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+              ),
+              onPressed: _moodLoading ? null : _detectMood,
+              child: _moodLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.3,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text(
+                      'Tell me',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+            ),
+          ),
+          if (_detectedMood != null) ...[
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              decoration: BoxDecoration(
+                color: _mint,
+                borderRadius: BorderRadius.circular(17),
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    'YOUR MOOD',
+                    style: TextStyle(
+                      color: _muted,
+                      fontSize: 9,
+                      letterSpacing: 1,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _detectedMood!,
+                    style: const TextStyle(
+                      color: _ink,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  if (_moodWhy != null && _moodWhy!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 9),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(11),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.72),
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            color: _ink,
+                            fontSize: 12,
+                            height: 1.45,
+                          ),
+                          children: [
+                            const TextSpan(
+                              text: 'Why I chose this: ',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            TextSpan(text: _moodWhy!),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+          if (_moodError != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              _moodError!,
+              style: const TextStyle(
+                color: Color(0xFF9B303D),
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _sectionHeading({
     required String title,
     required String subtitle,
@@ -533,7 +763,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
               const SizedBox(width: 11),
               const Expanded(
                 child: Text(
-                  'Your check-in',
+                  "How you're doing",
                   style: TextStyle(
                     color: _ink,
                     fontSize: 18,
@@ -614,7 +844,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
             SizedBox(width: 13),
             Expanded(
               child: Text(
-                'Your check-in history will appear here. Each small pause counts.',
+                "Your check-in history will appear here. Each small pause counts.",
                 style: TextStyle(
                   color: _ink,
                   fontSize: 13,
@@ -741,6 +971,8 @@ class _WellnessScreenState extends State<WellnessScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _buildHero(),
+                      const SizedBox(height: 18),
+                      _buildMoodBox(),
                       const SizedBox(height: 24),
                       Row(
                         children: [

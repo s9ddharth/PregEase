@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import 'nutrition_recipe_chef.dart';
+
 class NutritionScreen extends StatefulWidget {
   final String apiBaseUrl;
   final Future<Map<String, String>> Function() authHeaders;
@@ -20,12 +22,7 @@ class NutritionScreen extends StatefulWidget {
 class _NutritionScreenState extends State<NutritionScreen> {
   Map<String, dynamic>? _data;
   bool _loading = true;
-  bool _generatingSuggestions = false;
   String? _error;
-  String? _suggestionsError;
-  Map<String, dynamic>? _aiSuggestions;
-  String _selectedCuisine = 'Indian';
-  String _selectedMealType = 'Any meal';
 
   static const Color _ink = Color(0xFF29352D);
   static const Color _muted = Color(0xFF6E796F);
@@ -46,8 +43,6 @@ class _NutritionScreenState extends State<NutritionScreen> {
         _loading = true;
         _error = null;
         // Discard AI ideas generated with the previous profile preferences.
-        _aiSuggestions = null;
-        _suggestionsError = null;
       });
     }
 
@@ -97,171 +92,6 @@ class _NutritionScreenState extends State<NutritionScreen> {
         _loading = false;
       });
     }
-  }
-
-  Future<void> _generateAiSuggestions() async {
-    if (_generatingSuggestions) return;
-
-    setState(() {
-      _generatingSuggestions = true;
-      _suggestionsError = null;
-    });
-
-    try {
-      final response = await http
-          .post(
-            Uri.parse(
-              '${widget.apiBaseUrl}/pregnancy/nutrition/suggestions',
-            ),
-            headers: {
-              ...await widget.authHeaders(),
-              'Content-Type': 'application/json',
-            },
-            body: jsonEncode({
-              'cuisine': _selectedCuisine == 'Any cuisine'
-                  ? null
-                  : _selectedCuisine,
-              'meal_type': _selectedMealType == 'Any meal'
-                  ? null
-                  : _selectedMealType,
-            }),
-          )
-          .timeout(const Duration(seconds: 120));
-
-      if (!mounted) return;
-
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        if (decoded is Map<String, dynamic>) {
-          setState(() {
-            _aiSuggestions = decoded;
-            _generatingSuggestions = false;
-          });
-        } else {
-          setState(() {
-            _suggestionsError = 'The server returned an unexpected response.';
-            _generatingSuggestions = false;
-          });
-        }
-      } else {
-        var detail = '';
-        try {
-          final body = jsonDecode(response.body);
-          if (body is Map<String, dynamic>) {
-            detail = (body['detail'] ?? '').toString();
-          }
-        } catch (_) {}
-
-        setState(() {
-          _suggestionsError = detail.isNotEmpty
-              ? '$detail (HTTP ${response.statusCode})'
-              : 'Could not generate suggestions (HTTP ${response.statusCode}).';
-          _generatingSuggestions = false;
-        });
-      }
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _suggestionsError =
-            'Could not reach the AI service. Check that FastAPI and Ollama are running, then try again.';
-        _generatingSuggestions = false;
-      });
-    }
-  }
-
-  Widget _buildAiSuggestions() {
-    final result = _aiSuggestions;
-    final suggestions = result?['suggestions'] is List
-        ? (result!['suggestions'] as List).whereType<Map>().toList()
-        : <Map>[];
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _line),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionHeader(
-            eyebrow: 'MADE WITH YOUR PREFERENCES',
-            title: result?['title']?.toString() ?? 'Your AI meal ideas',
-            subtitle: 'Ideas based on your pregnancy week and saved food restrictions.',
-          ),
-          const SizedBox(height: 14),
-          if (suggestions.isEmpty)
-            const Text(
-              'No meal ideas were returned. Please try again.',
-              style: TextStyle(color: _muted),
-            )
-          else
-            ...suggestions.map((meal) {
-              final ingredients = meal['ingredients'] is List
-                  ? (meal['ingredients'] as List)
-                      .map((item) => item.toString())
-                      .toList()
-                  : <String>[];
-              return Container(
-                width: double.infinity,
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF8F1),
-                  borderRadius: BorderRadius.circular(17),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      meal['name']?.toString() ?? 'Meal idea',
-                      style: const TextStyle(
-                        color: _ink,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    if ((meal['description']?.toString() ?? '').isNotEmpty) ...[
-                      const SizedBox(height: 5),
-                      Text(
-                        meal['description'].toString(),
-                        style: const TextStyle(
-                          color: _muted,
-                          height: 1.4,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                    if (ingredients.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        'Ingredients: ${ingredients.join(', ')}',
-                        style: const TextStyle(
-                          color: _ink,
-                          height: 1.4,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              );
-            }),
-          if ((result?['safety_note']?.toString() ?? '').isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              result!['safety_note'].toString(),
-              style: const TextStyle(
-                color: _muted,
-                fontSize: 12,
-                height: 1.45,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
   }
 
   @override
@@ -467,146 +297,11 @@ class _NutritionScreenState extends State<NutritionScreen> {
               },
             ),
           const SizedBox(height: 26),
-          _sectionHeader(
-            eyebrow: 'A FRESH LITTLE IDEA',
-            title: 'Create AI meal suggestions',
-            subtitle: 'Choose what sounds good, then ask for personalized ideas.',
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(17),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(23),
-              border: Border.all(color: _line),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Cuisine',
-                  style: TextStyle(
-                    color: _ink,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 7),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedCuisine,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: _cream,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 13,
-                      vertical: 11,
-                    ),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'Indian', child: Text('Indian')),
-                    DropdownMenuItem(value: 'Mediterranean', child: Text('Mediterranean')),
-                    DropdownMenuItem(value: 'East Asian', child: Text('East Asian')),
-                    DropdownMenuItem(value: 'Western', child: Text('Western')),
-                    DropdownMenuItem(value: 'Any cuisine', child: Text('Any cuisine')),
-                  ],
-                  onChanged: _generatingSuggestions
-                      ? null
-                      : (value) {
-                          if (value != null) {
-                            setState(() => _selectedCuisine = value);
-                          }
-                        },
-                ),
-                const SizedBox(height: 13),
-                const Text(
-                  'Meal type',
-                  style: TextStyle(
-                    color: _ink,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 7),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedMealType,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: _cream,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 13,
-                      vertical: 11,
-                    ),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'Any meal', child: Text('Any meal')),
-                    DropdownMenuItem(value: 'Breakfast', child: Text('Breakfast')),
-                    DropdownMenuItem(value: 'Lunch', child: Text('Lunch')),
-                    DropdownMenuItem(value: 'Dinner', child: Text('Dinner')),
-                    DropdownMenuItem(value: 'Snack', child: Text('Snack')),
-                  ],
-                  onChanged: _generatingSuggestions
-                      ? null
-                      : (value) {
-                          if (value != null) {
-                            setState(() => _selectedMealType = value);
-                          }
-                        },
-                ),
-                const SizedBox(height: 15),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: _generatingSuggestions ? null : _generateAiSuggestions,
-                    icon: _generatingSuggestions
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(Icons.auto_awesome_rounded),
-                    label: Text(
-                      _generatingSuggestions
-                          ? 'Cooking up ideas…'
-                          : 'Generate AI suggestions',
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _ink,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                  ),
-                ),
-                if (_suggestionsError != null) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    _suggestionsError!,
-                    style: const TextStyle(
-                      color: Color(0xFFB95754),
-                      fontSize: 13,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          if (_aiSuggestions != null) ...[
-            const SizedBox(height: 14),
-            _buildAiSuggestions(),
-          ],
           const SizedBox(height: 26),
+          NutritionRecipeChef(
+            apiBaseUrl: widget.apiBaseUrl,
+            authHeaders: widget.authHeaders,
+          ),
           _buildPreferenceAndAllergies(
             allergies: allergies,
             customPreference: customPreference,
